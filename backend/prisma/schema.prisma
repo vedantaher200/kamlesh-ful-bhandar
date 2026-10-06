@@ -1,0 +1,137 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("ADMIN") // ADMIN, STAFF
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  image       String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id                String   @id @default(uuid())
+  name              String
+  slug              String   @unique
+  description       String
+  price             Float?   // null means "Contact for Price"
+  isContactForPrice Boolean  @default(false)
+  availability      String   @default("AVAILABLE") // AVAILABLE, OUT_OF_STOCK, HIDDEN
+  isFeatured        Boolean  @default(false)
+  image             String
+  imagePublicId     String?
+  whatsappMessage   String?
+  categoryId        String
+  category          Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  description String
+  highlight   String?
+  image       String
+  category    String   @default("Decoration")
+  isAvailable Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model GalleryImage {
+  id            String   @id @default(uuid())
+  title         String
+  category      String   // Wedding, Car, Flower, Bouquets, Events, Traditional, Stage
+  categoryName  String   // e.g. Wedding Decorations
+  image         String
+  imagePublicId String?
+  description   String?
+  isPublished   Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Booking {
+  id            String   @id @default(uuid())
+  customerName  String
+  customerPhone String
+  eventType     String
+  eventDate     DateTime
+  eventLocation String
+  serviceId     String?
+  budget        String?
+  message       String?
+  status        String   @default("NEW") // NEW, CONTACTED, CONFIRMED, COMPLETED, CANCELLED
+  isDateBlocked Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Enquiry {
+  id            String   @id @default(uuid())
+  customerName  String
+  customerPhone String
+  eventType     String?
+  eventDate     String?
+  eventLocation String?
+  service       String?
+  budget        String?
+  message       String?
+  status        String   @default("NEW") // NEW, CONTACTED, CONFIRMED, COMPLETED, CANCELLED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Review {
+  id           String   @id @default(uuid())
+  customerName String
+  rating       Int      @default(5)
+  comment      String
+  isApproved   Boolean  @default(false)
+  status       String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Offer {
+  id          String    @id @default(uuid())
+  title       String
+  description String
+  image       String?
+  startDate   DateTime?
+  endDate     DateTime?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model BusinessSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

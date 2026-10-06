@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+*/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment & Secret files (NEVER commit real credentials)
+.env
+.env*.local
+*.env
+backend/.env
+frontend/.env
+!*.env.example
+
+# Production Build Output
+dist/
+*/dist/
+build/
+*/build/
+out/
+.next/
+dist-ssr/
+
+# Local Uploads & Static Cache (ignore uploaded images, keep directory)
+backend/uploads/*
+!backend/uploads/.gitkeep
+uploads/*
+!uploads/.gitkeep
+*.log
+
+# Database files & local sqlite
+*.sqlite
+*.sqlite3
+*.db
+*.local
+
+# IDE & OS Configuration
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

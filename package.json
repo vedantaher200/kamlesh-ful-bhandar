@@ -1,0 +1,14 @@
+{
+  "name": "kamlesh-ful-bhandar-platform",
+  "version": "1.0.0",
+  "description": "Full-Stack Digital Flower & Decoration Platform for Kamlesh Ful Bhandar, Nashik",
+  "scripts": {
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build:backend": "npm --prefix backend run build",
+    "build:frontend": "npm --prefix frontend run build",
+    "build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "prisma:seed": "npm --prefix backend run prisma:seed",
+    "prisma:push": "npm --prefix backend run prisma:push"
+  }
+}
