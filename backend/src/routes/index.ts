@@ -10,6 +10,8 @@ import reviewRoutes from './reviewRoutes.js';
 import offerRoutes from './offerRoutes.js';
 import settingsRoutes from './settingsRoutes.js';
 import uploadRoutes from './uploadRoutes.js';
+import locationRoutes from './locationRoutes.js';
+import carDecorationRoutes from './carDecorationRoutes.js';
 
 const router = Router();
 
@@ -24,5 +26,7 @@ router.use('/reviews', reviewRoutes);
 router.use('/offers', offerRoutes);
 router.use('/settings', settingsRoutes);
 router.use('/upload', uploadRoutes);
+router.use('/locations', locationRoutes);
+router.use('/car-decorations', carDecorationRoutes);
 
 export default router;

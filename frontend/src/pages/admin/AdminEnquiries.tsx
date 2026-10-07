@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { MessageSquare, Phone, MessageCircle, Trash2, Filter } from 'lucide-react';
 import { api } from '../../services/api';
 import { Enquiry } from '../../types/index';
 
 export default function AdminEnquiries() {
+  const [searchParams] = useSearchParams();
+  const initialStatus = searchParams.get('status') || 'ALL';
   const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
-  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [loading, setLoading] = useState(true);
 
   const fetchEnquiries = async () => {

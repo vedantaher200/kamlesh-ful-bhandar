@@ -39,7 +39,7 @@ export default function Footer() {
             <h4>Our Specialties</h4>
             <ul className="footer-links">
               <li><Link to="/services">Wedding Flower Decor</Link></li>
-              <li><Link to="/products?category=car-decoration">Car Flower Decoration</Link></li>
+              <li><Link to="/car-decoration">🚗 Car Decoration</Link></li>
               <li><Link to="/products?category=haar-mala">Haar & Mala Garlands</Link></li>
               <li><Link to="/services">Mandap & Stage Setup</Link></li>
               <li><Link to="/products?category=bouquets">Fresh Bouquets</Link></li>

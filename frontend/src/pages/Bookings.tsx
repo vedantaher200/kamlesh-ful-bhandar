@@ -1,11 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { CalendarCheck, CheckCircle2, MessageCircle, AlertTriangle, Send, PhoneCall } from 'lucide-react';
 import { api, createWhatsAppUrl } from '../services/api';
-import { Service } from '../types/index';
+import { Service, Location } from '../types/index';
 
 export default function Bookings() {
   const [blockedDates, setBlockedDates] = useState<string[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [availableLocations, setAvailableLocations] = useState<Location[]>([]);
+  const [talukas, setTalukas] = useState<string[]>([]);
+  const [selectedTaluka, setSelectedTaluka] = useState('Niphad');
+  const [selectedVillage, setSelectedVillage] = useState('Niphad');
+  const [isOtherLoc, setIsOtherLoc] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const [formData, setFormData] = useState({
@@ -13,7 +18,7 @@ export default function Bookings() {
     customerPhone: '',
     eventType: 'Wedding',
     eventDate: '',
-    eventLocation: 'Nashik',
+    eventLocation: 'Niphad, Nashik',
     serviceId: '',
     budget: '',
     message: ''
@@ -26,9 +31,10 @@ export default function Bookings() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [calRes, servRes] = await Promise.all([
+        const [calRes, servRes, locRes] = await Promise.all([
           api.getCalendarDates(),
-          api.getServices()
+          api.getServices(),
+          api.getActiveLocations()
         ]);
         if (calRes.success) {
           setBlockedDates(calRes.dates.map((d) => d.date));
@@ -36,8 +42,12 @@ export default function Bookings() {
         if (servRes.success) {
           setServices(servRes.services);
         }
+        if (locRes.success) {
+          setAvailableLocations(locRes.locations);
+          setTalukas(locRes.talukas);
+        }
       } catch (err) {
-        console.error('Error fetching calendar dates:', err);
+        console.error('Error fetching data:', err);
       } finally {
         setLoading(false);
       }
@@ -196,16 +206,60 @@ export default function Bookings() {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.4rem', color: 'var(--color-primary-dark)' }}>
-                    Event Venue / Location in Nashik
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Pawan Nagar, Gangapur Road, etc."
-                    className="form-control"
-                    value={formData.eventLocation}
-                    onChange={(e) => setFormData({ ...formData, eventLocation: e.target.value })}
-                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                    <label style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--color-primary-dark)' }}>
+                      Location in Nashik District *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsOtherLoc(!isOtherLoc)}
+                      style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      {isOtherLoc ? 'Choose from list' : 'Other location?'}
+                    </button>
+                  </div>
+
+                  {isOtherLoc ? (
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Panchavati, Gangapur Road, etc."
+                      className="form-control"
+                      value={formData.eventLocation}
+                      onChange={(e) => setFormData({ ...formData, eventLocation: e.target.value })}
+                    />
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                      <select
+                        className="form-control"
+                        style={{ fontSize: '0.85rem' }}
+                        value={selectedTaluka}
+                        onChange={(e) => setSelectedTaluka(e.target.value)}
+                      >
+                        {talukas.map((t) => (
+                          <option key={t} value={t}>{t} Taluka</option>
+                        ))}
+                      </select>
+
+                      <select
+                        className="form-control"
+                        style={{ fontSize: '0.85rem' }}
+                        value={selectedVillage}
+                        onChange={(e) => {
+                          setSelectedVillage(e.target.value);
+                          setFormData({ ...formData, eventLocation: `${e.target.value}, ${selectedTaluka}, Nashik` });
+                        }}
+                      >
+                        {availableLocations
+                          .filter((l) => l.taluka === selectedTaluka)
+                          .map((l) => (
+                            <option key={l.id} value={l.village}>
+                              {l.village} {l.area ? `(${l.area})` : ''}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
 
                 <div>

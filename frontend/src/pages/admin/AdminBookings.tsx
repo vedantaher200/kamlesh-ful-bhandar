@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Calendar, Ban, Trash2, CheckCircle, Clock } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Calendar, Ban, Trash2, CheckCircle, Clock, Filter } from 'lucide-react';
 import { api } from '../../services/api';
 import { Booking } from '../../types/index';
 
 export default function AdminBookings() {
+  const [searchParams] = useSearchParams();
+  const initialStatus = searchParams.get('status') || 'ALL';
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [statusFilter, setStatusFilter] = useState<string>(initialStatus);
   const [loading, setLoading] = useState(true);
 
   // Block date form
@@ -64,6 +68,14 @@ export default function AdminBookings() {
     }
   };
 
+  const filteredBookings = bookings.filter((b) => {
+    if (statusFilter === 'ALL') return true;
+    if (statusFilter === 'PENDING') {
+      return b.status === 'NEW' || b.status === 'PENDING';
+    }
+    return b.status === statusFilter;
+  });
+
   return (
     <div>
       <div className="admin-header">
@@ -72,6 +84,22 @@ export default function AdminBookings() {
           <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
             Track upcoming weddings, manage dates, and block dates to prevent conflict
           </p>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <Filter size={16} />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="form-control"
+            style={{ width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+          >
+            <option value="ALL">All Bookings</option>
+            <option value="PENDING">Pending / New</option>
+            <option value="CONFIRMED">Confirmed</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
         </div>
       </div>
 
@@ -126,7 +154,7 @@ export default function AdminBookings() {
               </tr>
             </thead>
             <tbody>
-              {bookings.map((b) => (
+              {filteredBookings.map((b) => (
                 <tr key={b.id} style={{ background: b.isDateBlocked ? '#fff8f8' : 'transparent' }}>
                   <td style={{ fontWeight: 700, color: 'var(--color-primary-dark)' }}>
                     {new Date(b.eventDate).toLocaleDateString('en-IN', {

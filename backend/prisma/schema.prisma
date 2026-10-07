@@ -29,21 +29,66 @@ model Category {
 }
 
 model Product {
-  id                String   @id @default(uuid())
+  id                String         @id @default(uuid())
   name              String
-  slug              String   @unique
+  slug              String         @unique
   description       String
-  price             Float?   // null means "Contact for Price"
-  isContactForPrice Boolean  @default(false)
-  availability      String   @default("AVAILABLE") // AVAILABLE, OUT_OF_STOCK, HIDDEN
-  isFeatured        Boolean  @default(false)
+  shortDescription  String?
+  price             Float?         // null means "Contact for Price"
+  priceType         String         @default("FIXED") // FIXED, STARTING_FROM, CONTACT_FOR_PRICE
+  isContactForPrice Boolean        @default(false)
+  availability      String         @default("AVAILABLE") // AVAILABLE, OUT_OF_STOCK, HIDDEN
+  isFeatured        Boolean        @default(false)
+  isPublished       Boolean        @default(true)
   image             String
   imagePublicId     String?
+  images            ProductImage[]
+  subcategory       String?
+  flowerType        String?        // e.g. Rose + Mogra
+  length            String?        // e.g. 90 cm
+  width             String?
+  height            String?
+  weight            String?
+  color             String?        // e.g. Red + White, Yellow
+  suitableFor       String?        // e.g. Wedding / Varmala / Puja
   whatsappMessage   String?
   categoryId        String
-  category          Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  category          Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([categoryId])
+  @@index([availability])
+  @@index([isFeatured])
+  @@index([isPublished])
+}
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  url       String
+  publicId  String?
+  isPrimary Boolean  @default(false)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+}
+
+model Location {
+  id        String   @id @default(uuid())
+  district  String   @default("Nashik")
+  taluka    String
+  village   String
+  area      String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([district])
+  @@index([taluka])
+  @@index([village])
+  @@index([isActive])
 }
 
 model Service {
@@ -63,7 +108,7 @@ model Service {
 model GalleryImage {
   id            String   @id @default(uuid())
   title         String
-  category      String   // Wedding, Car, Flower, Bouquets, Events, Traditional, Stage
+  category      String   // Wedding, Car, Haar & Mala, Bouquets, Events, Traditional, Stage, Mandap, Flowers
   categoryName  String   // e.g. Wedding Decorations
   image         String
   imagePublicId String?
@@ -80,7 +125,12 @@ model Booking {
   eventType     String
   eventDate     DateTime
   eventLocation String
+  district      String?  @default("Nashik")
+  taluka        String?
+  village       String?
   serviceId     String?
+  productId     String?
+  productName   String?
   budget        String?
   message       String?
   status        String   @default("NEW") // NEW, CONTACTED, CONFIRMED, COMPLETED, CANCELLED
@@ -96,7 +146,12 @@ model Enquiry {
   eventType     String?
   eventDate     String?
   eventLocation String?
+  district      String?  @default("Nashik")
+  taluka        String?
+  village       String?
   service       String?
+  productId     String?
+  productName   String?
   budget        String?
   message       String?
   status        String   @default("NEW") // NEW, CONTACTED, CONFIRMED, COMPLETED, CANCELLED
@@ -135,3 +190,20 @@ model BusinessSetting {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+model CarDecorationPost {
+  id            String   @id @default(uuid())
+  title         String
+  description   String?
+  price         Float?
+  priceText     String?  // e.g. "₹5,000" or "Price on Request"
+  image         String
+  imagePublicId String?
+  status        String   @default("PUBLISHED") // PUBLISHED, UNPUBLISHED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status])
+}
+
+

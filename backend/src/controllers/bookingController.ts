@@ -55,7 +55,22 @@ export const getBookings = async (req: Request, res: Response): Promise<void> =>
 
 export const createBooking = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { customerName, customerPhone, phone, eventType, eventDate, eventLocation, serviceId, budget, message } = req.body;
+    const {
+      customerName,
+      customerPhone,
+      phone,
+      eventType,
+      eventDate,
+      eventLocation,
+      district = 'Nashik',
+      taluka,
+      village,
+      serviceId,
+      productId,
+      productName,
+      budget,
+      message
+    } = req.body;
     const finalPhone = customerPhone || phone;
 
     if (!customerName || !finalPhone || !eventDate) {
@@ -88,11 +103,16 @@ export const createBooking = async (req: Request, res: Response): Promise<void> 
     const booking = await prisma.booking.create({
       data: {
         customerName: customerName.trim(),
-        customerPhone: customerPhone.trim(),
+        customerPhone: finalPhone.trim(),
         eventType: eventType || 'Wedding',
         eventDate: targetDate,
-        eventLocation: eventLocation || 'Nashik',
+        eventLocation: eventLocation || (village ? `${village}, ${taluka || 'Nashik'}` : 'Nashik'),
+        district: district ? district.trim() : 'Nashik',
+        taluka: taluka ? taluka.trim() : null,
+        village: village ? village.trim() : null,
         serviceId: serviceId || null,
+        productId: productId || null,
+        productName: productName || null,
         budget: budget || null,
         message: message ? message.trim() : null,
         status: 'NEW',

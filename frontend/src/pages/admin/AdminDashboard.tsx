@@ -5,11 +5,12 @@ import {
   Calendar,
   MessageSquare,
   Image as ImageIcon,
-  Tag,
   CheckCircle,
   PlusCircle,
-  Clock,
-  ArrowRight
+  MapPin,
+  ArrowRight,
+  Car,
+  ChevronRight
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { DashboardStats, Enquiry } from '../../types/index';
@@ -46,75 +47,161 @@ export default function AdminDashboard() {
             Real-time business status for Kamlesh Ful Bhandar, Nashik
           </p>
         </div>
-        <Link to="/admin/products" className="btn btn-primary btn-sm">
-          <PlusCircle size={16} />
-          <span>Add Real Product</span>
-        </Link>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <Link to="/admin/car-decorations" className="btn btn-outline btn-sm">
+            <Car size={16} />
+            <span>Manage Car Decor</span>
+          </Link>
+          <Link to="/admin/products" className="btn btn-primary btn-sm">
+            <PlusCircle size={16} />
+            <span>Add Product</span>
+          </Link>
+        </div>
       </div>
 
       {loading ? (
         <p>Loading stats from database...</p>
       ) : (
         <>
-          {/* KPI STAT CARDS */}
-          <div className="kpi-grid">
-            <div className="kpi-card">
+          {/* KPI STAT CARDS — ALL CLICKABLE & FUNCTIONAL */}
+          <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
+            {/* 1. Total Products -> Products Page */}
+            <Link
+              to="/admin/products"
+              className="kpi-card"
+              style={{ textDecoration: 'none', transition: 'transform 0.2s, box-shadow 0.2s', cursor: 'pointer' }}
+            >
               <div className="kpi-icon-wrap"><Package size={26} /></div>
               <div className="kpi-text">
                 <h4>Total Products</h4>
                 <div className="kpi-value">{stats?.totalProducts || 0}</div>
                 <span style={{ fontSize: '0.75rem', color: '#16a34a' }}>
-                  {stats?.availableProducts || 0} Available
+                  {stats?.availableProducts || 0} In Stock • Click to view →
                 </span>
               </div>
-            </div>
+            </Link>
 
-            <div className="kpi-card">
-              <div className="kpi-icon-wrap" style={{ background: 'rgba(234, 179, 8, 0.15)', color: '#ca8a04' }}><MessageSquare size={26} /></div>
+            {/* 2. Car Decorations -> Car Decorations Admin Page */}
+            <Link
+              to="/admin/car-decorations"
+              className="kpi-card"
+              style={{ textDecoration: 'none', transition: 'transform 0.2s, box-shadow 0.2s', cursor: 'pointer', border: '1px solid #fed7aa' }}
+            >
+              <div className="kpi-icon-wrap" style={{ background: '#fff7ed', color: '#ea580c' }}>
+                <Car size={26} />
+              </div>
               <div className="kpi-text">
-                <h4>Total Enquiries</h4>
-                <div className="kpi-value">{stats?.totalEnquiries || 0}</div>
-                <span style={{ fontSize: '0.75rem', color: '#ca8a04' }}>
-                  {stats?.pendingEnquiries || 0} Pending
+                <h4>Car Decorations</h4>
+                <div className="kpi-value">{stats?.carDecorations || 0}</div>
+                <span style={{ fontSize: '0.75rem', color: '#ea580c', fontWeight: 600 }}>
+                  {stats?.publishedCarDecorations || 0} Published Online →
                 </span>
               </div>
-            </div>
+            </Link>
 
-            <div className="kpi-card">
+            {/* 3. Published Online Products -> Products Page */}
+            <Link
+              to="/admin/products"
+              className="kpi-card"
+              style={{ textDecoration: 'none', transition: 'transform 0.2s, box-shadow 0.2s', cursor: 'pointer' }}
+            >
+              <div className="kpi-icon-wrap" style={{ background: 'rgba(22, 163, 74, 0.15)', color: '#16a34a' }}><CheckCircle size={26} /></div>
+              <div className="kpi-text">
+                <h4>Published Products</h4>
+                <div className="kpi-value">{stats?.publishedProducts || 0}</div>
+                <span style={{ fontSize: '0.75rem', color: '#16a34a' }}>Visible on Catalogue →</span>
+              </div>
+            </Link>
+
+            {/* 4. Pending Orders / Bookings -> Bookings Page with Pending Filter */}
+            <Link
+              to="/admin/bookings?status=PENDING"
+              className="kpi-card"
+              style={{ textDecoration: 'none', transition: 'transform 0.2s, box-shadow 0.2s', cursor: 'pointer', border: '1px solid #fed7aa' }}
+            >
+              <div className="kpi-icon-wrap" style={{ background: '#fff7ed', color: '#ea580c' }}><Clock size={26} /></div>
+              <div className="kpi-text">
+                <h4>Pending Orders</h4>
+                <div className="kpi-value">{stats?.pendingEnquiries || 0}</div>
+                <span style={{ fontSize: '0.75rem', color: '#ea580c', fontWeight: 600 }}>Action Required • View Pending →</span>
+              </div>
+            </Link>
+
+            {/* 5. Total Orders / Bookings -> All Bookings */}
+            <Link
+              to="/admin/bookings"
+              className="kpi-card"
+              style={{ textDecoration: 'none', transition: 'transform 0.2s, box-shadow 0.2s', cursor: 'pointer' }}
+            >
               <div className="kpi-icon-wrap" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#2563eb' }}><Calendar size={26} /></div>
               <div className="kpi-text">
-                <h4>Upcoming Bookings</h4>
+                <h4>Total Orders</h4>
                 <div className="kpi-value">{stats?.upcomingBookings || 0}</div>
-                <span style={{ fontSize: '0.75rem', color: '#2563eb' }}>Scheduled in Nashik</span>
+                <span style={{ fontSize: '0.75rem', color: '#2563eb' }}>All Event Bookings →</span>
               </div>
-            </div>
+            </Link>
 
-            <div className="kpi-card">
+            {/* 6. Customers / Enquiries -> Enquiries Page */}
+            <Link
+              to="/admin/enquiries"
+              className="kpi-card"
+              style={{ textDecoration: 'none', transition: 'transform 0.2s, box-shadow 0.2s', cursor: 'pointer' }}
+            >
+              <div className="kpi-icon-wrap" style={{ background: 'rgba(234, 179, 8, 0.15)', color: '#ca8a04' }}><MessageSquare size={26} /></div>
+              <div className="kpi-text">
+                <h4>Customers</h4>
+                <div className="kpi-value">{stats?.totalEnquiries || 0}</div>
+                <span style={{ fontSize: '0.75rem', color: '#ca8a04', fontWeight: 600 }}>
+                  Customer Records & Leads →
+                </span>
+              </div>
+            </Link>
+
+            {/* 6. Nashik Locations -> Locations Page */}
+            <Link
+              to="/admin/locations"
+              className="kpi-card"
+              style={{ textDecoration: 'none', transition: 'transform 0.2s, box-shadow 0.2s', cursor: 'pointer' }}
+            >
+              <div className="kpi-icon-wrap" style={{ background: 'rgba(249, 115, 22, 0.15)', color: '#ea580c' }}><MapPin size={26} /></div>
+              <div className="kpi-text">
+                <h4>Nashik Locations</h4>
+                <div className="kpi-value">{stats?.totalLocations || 0}</div>
+                <span style={{ fontSize: '0.75rem', color: '#ea580c' }}>Active Delivery Areas →</span>
+              </div>
+            </Link>
+
+            {/* 7. Gallery Images -> Gallery Page */}
+            <Link
+              to="/admin/gallery"
+              className="kpi-card"
+              style={{ textDecoration: 'none', transition: 'transform 0.2s, box-shadow 0.2s', cursor: 'pointer' }}
+            >
               <div className="kpi-icon-wrap" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#9333ea' }}><ImageIcon size={26} /></div>
               <div className="kpi-text">
-                <h4>Gallery Images</h4>
+                <h4>Gallery Portfolio</h4>
                 <div className="kpi-value">{stats?.galleryImages || 0}</div>
-                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Published</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Manage Photos →</span>
               </div>
-            </div>
+            </Link>
           </div>
 
           {/* QUICK SHORTCUT ACTIONS */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2.5rem' }}>
-            <Link to="/admin/products" style={{ background: '#ffffff', padding: '1.25rem', borderRadius: 'var(--radius-sm)', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontWeight: 600, color: 'var(--color-primary-dark)' }}>Manage Products</span>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2.5rem' }}>
+            <Link to="/admin/car-decorations" style={{ background: '#ffffff', padding: '1.25rem', borderRadius: 'var(--radius-sm)', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', textDecoration: 'none' }}>
+              <span style={{ fontWeight: 600, color: 'var(--color-primary-dark)' }}>🚗 Car Decoration Posts</span>
               <ArrowRight size={16} />
             </Link>
-            <Link to="/admin/bookings" style={{ background: '#ffffff', padding: '1.25rem', borderRadius: 'var(--radius-sm)', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontWeight: 600, color: 'var(--color-primary-dark)' }}>Calendar & Dates</span>
+            <Link to="/admin/products" style={{ background: '#ffffff', padding: '1.25rem', borderRadius: 'var(--radius-sm)', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', textDecoration: 'none' }}>
+              <span style={{ fontWeight: 600, color: 'var(--color-primary-dark)' }}>📦 Manage Products</span>
               <ArrowRight size={16} />
             </Link>
-            <Link to="/admin/gallery" style={{ background: '#ffffff', padding: '1.25rem', borderRadius: 'var(--radius-sm)', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontWeight: 600, color: 'var(--color-primary-dark)' }}>Upload Photos</span>
+            <Link to="/admin/bookings" style={{ background: '#ffffff', padding: '1.25rem', borderRadius: 'var(--radius-sm)', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', textDecoration: 'none' }}>
+              <span style={{ fontWeight: 600, color: 'var(--color-primary-dark)' }}>📅 Calendar & Bookings</span>
               <ArrowRight size={16} />
             </Link>
-            <Link to="/admin/settings" style={{ background: '#ffffff', padding: '1.25rem', borderRadius: 'var(--radius-sm)', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontWeight: 600, color: 'var(--color-primary-dark)' }}>Shop Details</span>
+            <Link to="/admin/enquiries" style={{ background: '#ffffff', padding: '1.25rem', borderRadius: 'var(--radius-sm)', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', textDecoration: 'none' }}>
+              <span style={{ fontWeight: 600, color: 'var(--color-primary-dark)' }}>💬 Customer Enquiries</span>
               <ArrowRight size={16} />
             </Link>
           </div>

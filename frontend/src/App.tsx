@@ -15,12 +15,15 @@ import Gallery from './pages/Gallery';
 import Bookings from './pages/Bookings';
 import About from './pages/About';
 import Contact from './pages/Contact';
+import CarDecorationPage from './pages/CarDecorationPage';
 
 // Admin Pages
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProducts from './pages/admin/AdminProducts';
+import AdminCarDecorations from './pages/admin/AdminCarDecorations';
+import AdminLocations from './pages/admin/AdminLocations';
 import AdminServices from './pages/admin/AdminServices';
 import AdminGallery from './pages/admin/AdminGallery';
 import AdminBookings from './pages/admin/AdminBookings';
@@ -42,6 +45,7 @@ function AppLayout() {
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
           <Route path="/products/:idOrSlug" element={<ProductDetail />} />
+          <Route path="/car-decoration" element={<CarDecorationPage />} />
           <Route path="/services" element={<Services />} />
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/bookings" element={<Bookings />} />
@@ -55,7 +59,9 @@ function AppLayout() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="car-decorations" element={<AdminCarDecorations />} />
             <Route path="products" element={<AdminProducts />} />
+            <Route path="locations" element={<AdminLocations />} />
             <Route path="services" element={<AdminServices />} />
             <Route path="gallery" element={<AdminGallery />} />
             <Route path="bookings" element={<AdminBookings />} />

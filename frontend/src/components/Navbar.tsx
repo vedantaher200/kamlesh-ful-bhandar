@@ -22,9 +22,10 @@ export default function Navbar() {
 
   const navLinks = [
     { name: 'Home', href: '/' },
-    { name: 'Products', href: '/products' },
+    { name: '🚗 Car Decoration', href: '/car-decoration' },
+    { name: 'Our Work', href: '/gallery' },
+    { name: 'Catalogue', href: '/products' },
     { name: 'Services', href: '/services' },
-    { name: 'Gallery', href: '/gallery' },
     { name: 'Book Event', href: '/bookings' },
     { name: 'About', href: '/about' },
     { name: 'Contact', href: '/contact' }

@@ -7,7 +7,9 @@ import {
   Enquiry,
   Review,
   Offer,
-  DashboardStats
+  DashboardStats,
+  Location,
+  CarDecorationPost
 } from '../types/index';
 
 const API_BASE = (import.meta.env.VITE_API_URL as string) || '/api';
@@ -49,22 +51,45 @@ export const api = {
   getMe: () => request<{ success: boolean; user: any }>('/auth/me'),
 
   // Products
-  getProducts: (params?: { category?: string; search?: string; availability?: string; featured?: boolean }) => {
+  getProducts: (params?: {
+    category?: string;
+    subcategory?: string;
+    search?: string;
+    availability?: string;
+    featured?: boolean;
+    minPrice?: number;
+    maxPrice?: number;
+    sort?: string;
+    page?: number;
+    limit?: number;
+    includeUnpublished?: boolean;
+  }) => {
     const query = new URLSearchParams();
     if (params?.category) query.append('category', params.category);
+    if (params?.subcategory) query.append('subcategory', params.subcategory);
     if (params?.search) query.append('search', params.search);
     if (params?.availability) query.append('availability', params.availability);
     if (params?.featured) query.append('featured', 'true');
-    return request<{ success: boolean; count: number; products: Product[] }>(`/products?${query.toString()}`);
+    if (params?.minPrice !== undefined) query.append('minPrice', String(params.minPrice));
+    if (params?.maxPrice !== undefined) query.append('maxPrice', String(params.maxPrice));
+    if (params?.sort) query.append('sort', params.sort);
+    if (params?.page) query.append('page', String(params.page));
+    if (params?.limit) query.append('limit', String(params.limit));
+    if (params?.includeUnpublished) query.append('includeUnpublished', 'true');
+    return request<{ success: boolean; count: number; total?: number; page?: number; totalPages?: number; products: Product[] }>(
+      `/products?${query.toString()}`
+    );
   },
   getProduct: (idOrSlug: string) =>
     request<{ success: boolean; product: Product }>(`/products/${idOrSlug}`),
-  createProduct: (data: Partial<Product>) =>
+  getRelatedProducts: (idOrSlug: string) =>
+    request<{ success: boolean; count: number; products: Product[] }>(`/products/${idOrSlug}/related`),
+  createProduct: (data: Partial<Product> & { images?: string[] | any[] }) =>
     request<{ success: boolean; product: Product }>('/products', {
       method: 'POST',
       body: JSON.stringify(data)
     }),
-  updateProduct: (id: string, data: Partial<Product>) =>
+  updateProduct: (id: string, data: Partial<Product> & { images?: string[] | any[] }) =>
     request<{ success: boolean; product: Product }>(`/products/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data)
@@ -77,18 +102,54 @@ export const api = {
   // Categories
   getCategories: () =>
     request<{ success: boolean; count: number; categories: Category[] }>('/categories'),
-  createCategory: (data: { name: string; description?: string }) =>
+  createCategory: (data: { name: string; description?: string; image?: string }) =>
     request<{ success: boolean; category: Category }>('/categories', {
       method: 'POST',
       body: JSON.stringify(data)
     }),
-  updateCategory: (id: string, data: { name: string; description?: string }) =>
+  updateCategory: (id: string, data: { name: string; description?: string; image?: string }) =>
     request<{ success: boolean; category: Category }>(`/categories/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data)
     }),
   deleteCategory: (id: string) =>
     request<{ success: boolean; message: string }>(`/categories/${id}`, {
+      method: 'DELETE'
+    }),
+
+  // Locations
+  getActiveLocations: (params?: { taluka?: string; search?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.taluka) query.append('taluka', params.taluka);
+    if (params?.search) query.append('search', params.search);
+    return request<{ success: boolean; count: number; talukas: string[]; locations: Location[] }>(
+      `/locations?${query.toString()}`
+    );
+  },
+  getAllLocationsAdmin: (params?: { taluka?: string; search?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.taluka) query.append('taluka', params.taluka);
+    if (params?.search) query.append('search', params.search);
+    return request<{ success: boolean; count: number; locations: Location[] }>(
+      `/locations/admin?${query.toString()}`
+    );
+  },
+  createLocation: (data: Partial<Location>) =>
+    request<{ success: boolean; message: string; location: Location }>('/locations', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
+  updateLocation: (id: string, data: Partial<Location>) =>
+    request<{ success: boolean; message: string; location: Location }>(`/locations/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    }),
+  toggleLocationStatus: (id: string) =>
+    request<{ success: boolean; message: string; location: Location }>(`/locations/${id}/toggle`, {
+      method: 'PATCH'
+    }),
+  deleteLocation: (id: string) =>
+    request<{ success: boolean; message: string }>(`/locations/${id}`, {
       method: 'DELETE'
     }),
 
@@ -246,7 +307,44 @@ export const api = {
       method: 'POST',
       body: formData
     });
-  }
+  },
+
+  // Car Decoration Posts (Single Source of Truth)
+  getPublishedCarDecorations: () =>
+    request<{ success: boolean; count: number; posts: CarDecorationPost[] }>('/car-decorations'),
+  getAllCarDecorationsAdmin: (status?: string) => {
+    const q = status ? `?status=${status}` : '';
+    return request<{
+      success: boolean;
+      count: number;
+      stats?: { total: number; published: number; unpublished: number };
+      posts: CarDecorationPost[];
+    }>(`/car-decorations/admin/all${q}`);
+  },
+  getCarDecorationById: (id: string) =>
+    request<{ success: boolean; post: CarDecorationPost }>(`/car-decorations/${id}`),
+  createCarDecoration: (formData: FormData | Partial<CarDecorationPost>) => {
+    const isFormData = formData instanceof FormData;
+    return request<{ success: boolean; message: string; post: CarDecorationPost }>('/car-decorations/admin', {
+      method: 'POST',
+      body: isFormData ? formData : JSON.stringify(formData)
+    });
+  },
+  updateCarDecoration: (id: string, formData: FormData | Partial<CarDecorationPost>) => {
+    const isFormData = formData instanceof FormData;
+    return request<{ success: boolean; message: string; post: CarDecorationPost }>(`/car-decorations/admin/${id}`, {
+      method: 'PUT',
+      body: isFormData ? formData : JSON.stringify(formData)
+    });
+  },
+  toggleCarDecorationStatus: (id: string) =>
+    request<{ success: boolean; message: string; post: CarDecorationPost }>(`/car-decorations/admin/${id}/status`, {
+      method: 'PATCH'
+    }),
+  deleteCarDecoration: (id: string) =>
+    request<{ success: boolean; message: string }>(`/car-decorations/admin/${id}`, {
+      method: 'DELETE'
+    })
 };
 
 /**
@@ -258,9 +356,14 @@ export const createWhatsAppUrl = (message: string, number = '919921972936') => {
   return `https://wa.me/${cleanNumber}?text=${encodedText}`;
 };
 
-export const formatPrice = (price: number | null | undefined, isContactForPrice?: boolean) => {
-  if (isContactForPrice || price === null || price === undefined) {
+export const formatPrice = (
+  price: number | null | undefined,
+  isContactForPrice?: boolean,
+  priceType?: string
+) => {
+  if (isContactForPrice || priceType === 'CONTACT_FOR_PRICE' || price === null || price === undefined) {
     return 'Contact for Price';
   }
-  return `₹${price.toLocaleString('en-IN')}`;
+  const prefix = priceType === 'STARTING_FROM' ? 'Starting from ' : '';
+  return `${prefix}₹${price.toLocaleString('en-IN')}`;
 };

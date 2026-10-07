@@ -1326,3 +1326,135 @@ input, select, textarea {
     text-align: center;
   }
 }
+
+/* =========================================================
+   MEESHO-STYLE MOBILE-FIRST CATALOGUE & CARD ENHANCEMENTS
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+
+  .product-card {
+    border-radius: var(--radius-sm) !important;
+  }
+
+  .product-card > a {
+    height: 160px !important;
+  }
+
+  .product-card h3 {
+    font-size: 0.95rem !important;
+    margin-bottom: 0.2rem !important;
+  }
+
+  .product-card p {
+    font-size: 0.75rem !important;
+    margin-bottom: 0.4rem !important;
+  }
+
+  .product-card .btn-sm {
+    padding: 0.45rem 0.25rem !important;
+    font-size: 0.75rem !important;
+  }
+}
+
+/* Category Pills Bar */
+.category-pills-bar {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 0.5rem;
+  scrollbar-width: thin;
+}
+
+.category-pills-bar::-webkit-scrollbar {
+  height: 4px;
+}
+
+.category-pills-bar::-webkit-scrollbar-thumb {
+  background: var(--color-cream-border);
+  border-radius: 4px;
+}
+
+.cat-pill-btn {
+  background: var(--color-cream);
+  border: 1.5px solid var(--color-cream-border);
+  color: var(--color-primary-dark);
+  font-size: 0.825rem;
+  font-weight: 600;
+  padding: 0.45rem 0.95rem;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.cat-pill-btn:hover {
+  background: #ffffff;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.cat-pill-btn.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+}
+
+/* Sticky Mobile Bar Enhancements */
+.sticky-mobile-bar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .sticky-mobile-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--mobile-bar-height, 60px);
+    background: #ffffff;
+    box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.08);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    z-index: 999;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .mobile-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #64748b;
+    text-decoration: none;
+  }
+
+  .mobile-action-btn svg {
+    flex-shrink: 0;
+  }
+
+  .mobile-action-call {
+    color: var(--color-primary);
+  }
+
+  .mobile-action-whatsapp {
+    color: #16a34a;
+  }
+
+  .mobile-action-catalogue {
+    color: #d97706;
+  }
+
+  .mobile-action-quote {
+    color: var(--color-primary-dark);
+  }
+}
+

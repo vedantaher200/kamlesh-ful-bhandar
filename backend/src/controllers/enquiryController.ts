@@ -3,7 +3,22 @@ import { prisma } from '../config/prisma.js';
 
 export const createEnquiry = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { customerName, customerPhone, phone, eventType, eventDate, eventLocation, service, budget, message } = req.body;
+    const {
+      customerName,
+      customerPhone,
+      phone,
+      eventType,
+      eventDate,
+      eventLocation,
+      district = 'Nashik',
+      taluka,
+      village,
+      service,
+      productId,
+      productName,
+      budget,
+      message
+    } = req.body;
     const finalPhone = customerPhone || phone;
 
     if (!customerName || !finalPhone) {
@@ -15,10 +30,15 @@ export const createEnquiry = async (req: Request, res: Response): Promise<void> 
       data: {
         customerName: customerName.trim(),
         customerPhone: finalPhone.trim(),
-        eventType: eventType || 'Wedding',
+        eventType: eventType || 'Flower Order',
         eventDate: eventDate || null,
-        eventLocation: eventLocation || 'Nashik',
-        service: service || 'Flower Decoration',
+        eventLocation: eventLocation || (village ? `${village}, ${taluka || 'Nashik'}` : 'Nashik'),
+        district: district ? district.trim() : 'Nashik',
+        taluka: taluka ? taluka.trim() : null,
+        village: village ? village.trim() : null,
+        service: service || productName || 'Flower Decoration',
+        productId: productId || null,
+        productName: productName || null,
         budget: budget || null,
         message: message ? message.trim() : null,
         status: 'NEW'

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   getProducts,
   getProductByIdOrSlug,
+  getRelatedProducts,
   createProduct,
   updateProduct,
   deleteProduct
@@ -12,6 +13,7 @@ const router = Router();
 
 // Public routes
 router.get('/', getProducts);
+router.get('/:idOrSlug/related', getRelatedProducts);
 router.get('/:idOrSlug', getProductByIdOrSlug);
 
 // Admin protected routes

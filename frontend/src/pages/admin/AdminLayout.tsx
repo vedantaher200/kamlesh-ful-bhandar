@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   Package,
   Sparkles,
+  MapPin,
   Image as ImageIcon,
   Calendar,
   MessageSquare,
@@ -12,7 +13,8 @@ import {
   Star,
   Settings,
   LogOut,
-  ExternalLink
+  ExternalLink,
+  Car
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -29,7 +31,9 @@ export default function AdminLayout() {
 
   const navItems = [
     { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
+    { name: 'Car Decorations', path: '/admin/car-decorations', icon: Car },
     { name: 'Products', path: '/admin/products', icon: Package },
+    { name: 'Locations', path: '/admin/locations', icon: MapPin },
     { name: 'Services', path: '/admin/services', icon: Sparkles },
     { name: 'Gallery', path: '/admin/gallery', icon: ImageIcon },
     { name: 'Bookings & Dates', path: '/admin/bookings', icon: Calendar },

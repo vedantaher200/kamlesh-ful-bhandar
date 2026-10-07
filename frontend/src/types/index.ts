@@ -9,20 +9,52 @@ export interface Category {
   };
 }
 
+export interface ProductImage {
+  id: string;
+  url: string;
+  publicId?: string | null;
+  isPrimary?: boolean;
+  productId: string;
+  createdAt?: string;
+}
+
 export interface Product {
   id: string;
   name: string;
   slug: string;
   description: string;
+  shortDescription?: string | null;
   price: number | null;
+  priceType?: 'FIXED' | 'STARTING_FROM' | 'CONTACT_FOR_PRICE';
   isContactForPrice: boolean;
   availability: 'AVAILABLE' | 'OUT_OF_STOCK' | 'HIDDEN';
   isFeatured: boolean;
+  isPublished?: boolean;
   image: string;
   imagePublicId?: string | null;
+  images?: ProductImage[];
+  subcategory?: string | null;
+  flowerType?: string | null;
+  length?: string | null;
+  width?: string | null;
+  height?: string | null;
+  weight?: string | null;
+  color?: string | null;
+  suitableFor?: string | null;
   whatsappMessage?: string | null;
   categoryId: string;
   category?: Category;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Location {
+  id: string;
+  district: string;
+  taluka: string;
+  village: string;
+  area?: string | null;
+  isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -61,7 +93,12 @@ export interface Booking {
   eventType: string;
   eventDate: string;
   eventLocation: string;
+  district?: string | null;
+  taluka?: string | null;
+  village?: string | null;
   serviceId?: string | null;
+  productId?: string | null;
+  productName?: string | null;
   budget?: string | null;
   message?: string | null;
   status: 'NEW' | 'CONTACTED' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
@@ -77,7 +114,12 @@ export interface Enquiry {
   eventType?: string | null;
   eventDate?: string | null;
   eventLocation?: string | null;
+  district?: string | null;
+  taluka?: string | null;
+  village?: string | null;
   service?: string | null;
+  productId?: string | null;
+  productName?: string | null;
   budget?: string | null;
   message?: string | null;
   status: 'NEW' | 'CONTACTED' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
@@ -115,10 +157,28 @@ export interface User {
 
 export interface DashboardStats {
   totalProducts: number;
+  publishedProducts?: number;
   availableProducts: number;
   totalEnquiries: number;
   pendingEnquiries: number;
   upcomingBookings: number;
   galleryImages: number;
   activeOffers: number;
+  totalLocations?: number;
+  carDecorations?: number;
+  publishedCarDecorations?: number;
 }
+
+export interface CarDecorationPost {
+  id: string;
+  title: string;
+  description?: string | null;
+  price?: number | null;
+  priceText?: string | null;
+  image: string;
+  imagePublicId?: string | null;
+  status: 'PUBLISHED' | 'UNPUBLISHED';
+  createdAt?: string;
+  updatedAt?: string;
+}
+

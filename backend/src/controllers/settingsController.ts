@@ -42,14 +42,19 @@ export const getDashboardStats = async (_req: Request, res: Response): Promise<v
   try {
     const [
       totalProducts,
+      publishedProducts,
       availableProducts,
       totalEnquiries,
       pendingEnquiries,
       upcomingBookings,
       galleryImages,
-      activeOffers
+      activeOffers,
+      totalLocations,
+      carDecorations,
+      publishedCarDecorations
     ] = await Promise.all([
       prisma.product.count(),
+      prisma.product.count({ where: { isPublished: true } }),
       prisma.product.count({ where: { availability: 'AVAILABLE' } }),
       prisma.enquiry.count(),
       prisma.enquiry.count({ where: { status: 'NEW' } }),
@@ -60,19 +65,26 @@ export const getDashboardStats = async (_req: Request, res: Response): Promise<v
         }
       }),
       prisma.galleryImage.count(),
-      prisma.offer.count({ where: { isActive: true } })
+      prisma.offer.count({ where: { isActive: true } }),
+      prisma.location.count(),
+      prisma.carDecorationPost.count(),
+      prisma.carDecorationPost.count({ where: { status: 'PUBLISHED' } })
     ]);
 
     res.json({
       success: true,
       stats: {
         totalProducts,
+        publishedProducts,
         availableProducts,
         totalEnquiries,
         pendingEnquiries,
         upcomingBookings,
         galleryImages,
-        activeOffers
+        activeOffers,
+        totalLocations,
+        carDecorations,
+        publishedCarDecorations
       }
     });
   } catch (error: any) {
