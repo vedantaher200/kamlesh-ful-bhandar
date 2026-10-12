@@ -46,6 +46,10 @@ const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTI
 const uploadDir = isServerless ? path.join(os.tmpdir(), 'uploads') : path.resolve(__dirname, '../uploads');
 app.use('/uploads', express.static(uploadDir));
 
+// Diagnostics ping endpoints
+app.get('/api/ping', (_req, res) => res.json({ status: 'pong', time: new Date().toISOString() }));
+app.get('/ping', (_req, res) => res.json({ status: 'pong', time: new Date().toISOString() }));
+
 // Health check endpoint
 app.get('/api/health', async (_req, res) => {
   try {
