@@ -60,7 +60,7 @@ flower-website/
 │   │   ├── controllers/           # Products, Services, Auth, Bookings, Enquiries, etc.
 │   │   ├── middleware/            # JWT authentication & Multer upload validation
 │   │   ├── routes/                # Express API routes
-│   │   └── server.mts             # Server entry point (ESM) & CORS
+│   │   └── server.ts              # Server entry point & CORS
 │   ├── tsconfig.json
 │   ├── package.json
 │   └── .env.example
