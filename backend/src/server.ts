@@ -94,8 +94,16 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
   });
 });
 
-// Start server in standalone / local environment
-if (!process.env.VERCEL) {
+// Start server in standalone / local environment only (never on serverless)
+const isServerlessRuntime = Boolean(
+  process.env.VERCEL ||
+  process.env.VERCEL_ENV ||
+  process.env.AWS_LAMBDA_FUNCTION_NAME ||
+  process.env.LAMBDA_TASK_ROOT ||
+  process.env.NODE_ENV === 'production'
+);
+
+if (require.main === module && !isServerlessRuntime) {
   const server = app.listen(PORT, () => {
     console.log(`🌸 Kamlesh Ful Bhandar Backend API listening on port ${PORT}`);
     console.log(`📡 Health Check: http://localhost:${PORT}/api/health`);
