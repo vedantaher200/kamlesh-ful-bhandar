@@ -3,10 +3,14 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import os from 'os';
+import { fileURLToPath } from 'url';
 import apiRouter from './routes/index.js';
 import { prisma } from './config/prisma.js';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -103,7 +107,7 @@ const isServerlessRuntime = Boolean(
   process.env.NODE_ENV === 'production'
 );
 
-if (require.main === module && !isServerlessRuntime) {
+if (!isServerlessRuntime) {
   const server = app.listen(PORT, () => {
     console.log(`🌸 Kamlesh Ful Bhandar Backend API listening on port ${PORT}`);
     console.log(`📡 Health Check: http://localhost:${PORT}/api/health`);
@@ -119,5 +123,4 @@ if (require.main === module && !isServerlessRuntime) {
   });
 }
 
-(app as any).default = app;
-export = app;
+export default app;

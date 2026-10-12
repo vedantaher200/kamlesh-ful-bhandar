@@ -1,8 +1,9 @@
 {
   "name": "kamlesh-ful-bhandar-backend",
   "version": "1.0.0",
+  "type": "module",
   "description": "Backend API for Kamlesh Ful Bhandar Flower & Decoration Platform",
-  "main": "server.js",
+  "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "prisma generate && tsc",
