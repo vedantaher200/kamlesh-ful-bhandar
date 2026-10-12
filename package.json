@@ -1,7 +1,6 @@
 {
   "name": "kamlesh-ful-bhandar-platform",
   "version": "1.0.0",
-  "type": "module",
   "description": "Full-Stack Digital Flower & Decoration Platform for Kamlesh Ful Bhandar, Nashik",
   "scripts": {
     "dev:backend": "npm --prefix backend run dev",
