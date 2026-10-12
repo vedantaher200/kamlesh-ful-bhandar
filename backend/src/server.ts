@@ -47,7 +47,7 @@ app.get('/api/ping', (_req, res) => res.json({ status: 'pong', time: new Date().
 app.get('/ping', (_req, res) => res.json({ status: 'pong', time: new Date().toISOString() }));
 
 // Health check endpoint
-app.get('/api/health', async (_req, res) => {
+const handleHealth = async (_req: express.Request, res: express.Response) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
     res.json({
@@ -56,16 +56,29 @@ app.get('/api/health', async (_req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (err: any) {
+    console.error('Health Check DB Error:', err);
     res.status(500).json({
       status: 'unhealthy',
       database: 'disconnected',
       error: err.message
     });
   }
-});
+};
 
-// Mount Central API Routes
+app.get('/api/health', handleHealth);
+app.get('/health', handleHealth);
+
+// Mount Central API Routes (supports both /api/* and direct path if rewritten)
 app.use('/api', apiRouter);
+app.use('/', apiRouter);
+
+// Catch process-level unhandled errors
+process.on('uncaughtException', (err) => {
+  console.error('Process Uncaught Exception:', err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('Process Unhandled Rejection:', reason);
+});
 
 // 404 Handler
 app.use((_req, res) => {
