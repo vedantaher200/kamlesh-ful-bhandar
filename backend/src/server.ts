@@ -79,16 +79,21 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
   });
 });
 
-const server = app.listen(PORT, () => {
-  console.log(`🌸 Kamlesh Ful Bhandar Backend API listening on port ${PORT}`);
-  console.log(`📡 Health Check: http://localhost:${PORT}/api/health`);
-});
-
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  await prisma.$disconnect();
-  server.close(() => {
-    console.log('Server stopped.');
-    process.exit(0);
+// Start server in standalone / local environment
+if (!process.env.VERCEL) {
+  const server = app.listen(PORT, () => {
+    console.log(`🌸 Kamlesh Ful Bhandar Backend API listening on port ${PORT}`);
+    console.log(`📡 Health Check: http://localhost:${PORT}/api/health`);
   });
-});
+
+  // Graceful shutdown
+  process.on('SIGINT', async () => {
+    await prisma.$disconnect();
+    server.close(() => {
+      console.log('Server stopped.');
+      process.exit(0);
+    });
+  });
+}
+
+export default app;
