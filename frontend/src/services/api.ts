@@ -33,7 +33,17 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   const headers = { ...getHeaders(isFormData), ...(options.headers as any) };
 
   const res = await fetch(url, { ...options, headers });
-  const data = await res.json();
+  const rawText = await res.text();
+
+  let data: any;
+  try {
+    data = rawText ? JSON.parse(rawText) : {};
+  } catch {
+    if (!res.ok) {
+      throw new Error(`Server returned status ${res.status}: ${rawText.slice(0, 200)}`);
+    }
+    throw new Error('Invalid JSON response received from server.');
+  }
 
   if (!res.ok) {
     throw new Error(data.message || `Request failed with status ${res.status}`);
