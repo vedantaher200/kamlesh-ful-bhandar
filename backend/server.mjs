@@ -49780,10 +49780,31 @@ if (!process.env.DATABASE_URL) {
 } else if (process.env.DATABASE_URL.includes("localhost") || process.env.DATABASE_URL.includes("127.0.0.1")) {
   console.warn("\u26A0\uFE0F [Prisma] DATABASE_URL points to localhost. Cloud deployments require a hosted PostgreSQL URL (e.g., Neon, Supabase).");
 }
-var prisma = globalForPrisma.prisma || new PrismaClient({
-  log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"]
+var _prismaInstance = null;
+function getPrismaClient() {
+  if (!_prismaInstance) {
+    if (!process.env.DATABASE_URL) {
+      console.warn("\u26A0\uFE0F [Prisma] DATABASE_URL environment variable is not set. Ensure it is defined in your Vercel Project Settings.");
+    } else if (process.env.DATABASE_URL.includes("localhost") || process.env.DATABASE_URL.includes("127.0.0.1")) {
+      console.warn("\u26A0\uFE0F [Prisma] DATABASE_URL points to localhost. Cloud deployments require a hosted PostgreSQL URL.");
+    }
+    _prismaInstance = globalForPrisma.prisma || new PrismaClient({
+      log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"]
+    });
+    if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = _prismaInstance;
+  }
+  return _prismaInstance;
+}
+var prisma = new Proxy({}, {
+  get(_target, prop) {
+    const client = getPrismaClient();
+    const value = client[prop];
+    if (typeof value === "function") {
+      return value.bind(client);
+    }
+    return value;
+  }
 });
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 // src/controllers/authController.ts
 var login = async (req, res) => {
