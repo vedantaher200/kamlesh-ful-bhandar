@@ -3,13 +3,26 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Full-Stack Digital Flower & Decoration Platform for Kamlesh Ful Bhandar, Nashik",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
   "scripts": {
     "dev:backend": "npm --prefix backend run dev",
     "dev:frontend": "npm --prefix frontend run dev",
     "build:backend": "npm --prefix backend run build",
     "build:frontend": "npm --prefix frontend run build",
     "build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "postinstall": "npm --prefix backend run prisma:generate",
     "prisma:seed": "npm --prefix backend run prisma:seed",
     "prisma:push": "npm --prefix backend run prisma:push"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0"
   }
 }
