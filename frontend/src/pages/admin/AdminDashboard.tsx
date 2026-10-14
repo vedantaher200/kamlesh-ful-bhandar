@@ -10,7 +10,8 @@ import {
   MapPin,
   ArrowRight,
   Car,
-  ChevronRight
+  ChevronRight,
+  Clock
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { DashboardStats, Enquiry } from '../../types/index';
@@ -60,7 +61,9 @@ export default function AdminDashboard() {
       </div>
 
       {loading ? (
-        <p>Loading stats from database...</p>
+        <div style={{ padding: '3rem 1.5rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
+          <p style={{ fontSize: '0.95rem' }}>Loading dashboard overview and real-time statistics...</p>
+        </div>
       ) : (
         <>
           {/* KPI STAT CARDS — ALL CLICKABLE & FUNCTIONAL */}
@@ -218,8 +221,14 @@ export default function AdminDashboard() {
             </div>
 
             {recentEnquiries.length === 0 ? (
-              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
-                No enquiries received yet.
+              <div style={{ padding: '2.5rem 1.5rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                <MessageSquare size={36} style={{ margin: '0 auto 0.75rem', opacity: 0.45, display: 'block' }} />
+                <p style={{ fontWeight: 600, color: 'var(--color-text-dark, #1e293b)', marginBottom: '0.25rem' }}>
+                  No customer enquiries yet
+                </p>
+                <p style={{ fontSize: '0.875rem', margin: 0 }}>
+                  Incoming customer leads and consultation requests will appear here with quick WhatsApp actions.
+                </p>
               </div>
             ) : (
               <table className="admin-table">
