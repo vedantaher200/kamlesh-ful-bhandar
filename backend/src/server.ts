@@ -7,13 +7,26 @@ import { fileURLToPath } from 'url';
 import apiRouter from './routes/index.js';
 import { prisma } from './config/prisma.js';
 
-dotenv.config();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Load environment variables from all possible locations
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(process.cwd(), 'backend/.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config();
+
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Request logging middleware (without logging sensitive bodies)
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    console.log(`[HTTP] ${req.method} ${req.originalUrl || req.url} -> ${res.statusCode} (${Date.now() - start}ms)`);
+  });
+  next();
+});
 
 // CORS configuration
 const allowedOrigins = [

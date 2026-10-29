@@ -6,7 +6,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (adminKey: string, password: string) => Promise<void>;
   logout: () => void;
   loading: boolean;
 }
@@ -38,8 +38,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const res = await api.login(email, password);
+  const login = async (adminKey: string, password: string) => {
+    const res = await api.login(adminKey, password);
     if (res.success && res.token) {
       localStorage.setItem('kamlesh_admin_token', res.token);
       setToken(res.token);

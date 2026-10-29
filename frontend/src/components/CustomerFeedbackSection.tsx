@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Review } from '../types/index';
 import { createWhatsAppUrl, api } from '../services/api';
 import { MessageSquare, MessageCircle, Star, Sparkles, Send, CheckCircle2 } from 'lucide-react';
@@ -20,23 +20,29 @@ export default function CustomerFeedbackSection({
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const submitLock = useRef(false);
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !comment.trim()) {
-      setErrorMsg('Please enter your name and comments.');
+    if (submitLock.current) return;
+    if (!name.trim() || !comment.trim() || !Number.isInteger(rating) || rating < 1 || rating > 5) {
+      setErrorMsg('Enter your name, review, and a rating from 1 to 5.');
       return;
     }
 
+    submitLock.current = true;
     setSubmitting(true);
     setErrorMsg('');
     try {
-      await api.createReview({
+      const response = await api.submitReview({
         customerName: name.trim(),
         rating,
         comment: comment.trim(),
         serviceUsed
       });
+      if (!response.success || !response.review?.id) {
+        throw new Error(response.message || 'The server did not confirm that your review was saved.');
+      }
       setSubmitted(true);
       if (onReviewSubmitted) onReviewSubmitted();
       setTimeout(() => {
@@ -46,8 +52,11 @@ export default function CustomerFeedbackSection({
         setComment('');
       }, 2500);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to submit review. Please try again.');
+      setErrorMsg(err instanceof TypeError
+        ? 'Network error. Check your connection and try again.'
+        : err.message || 'Failed to submit review. Please try again.');
     } finally {
+      submitLock.current = false;
       setSubmitting(false);
     }
   };
@@ -217,7 +226,7 @@ export default function CustomerFeedbackSection({
         {showReviewModal && (
           <div
             className="modal-overlay"
-            onClick={() => setShowReviewModal(false)}
+            onClick={() => { if (!submitting) setShowReviewModal(false); }}
             style={{
               position: 'fixed',
               inset: 0,
@@ -238,6 +247,9 @@ export default function CustomerFeedbackSection({
                 padding: '2rem',
                 maxWidth: '480px',
                 width: '100%',
+                maxHeight: 'calc(100vh - 2rem)',
+                overflowY: 'auto',
+                boxSizing: 'border-box',
                 boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)'
               }}
             >
@@ -268,7 +280,7 @@ export default function CustomerFeedbackSection({
                   </p>
 
                   {errorMsg && (
-                    <div style={{ background: '#fee2e2', color: '#b91c1c', padding: '0.6rem 0.8rem', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                    <div role="alert" aria-live="polite" style={{ background: '#fee2e2', color: '#b91c1c', padding: '0.75rem 0.9rem', borderRadius: '8px', fontSize: '0.9rem', lineHeight: 1.5, marginBottom: '1rem' }}>
                       {errorMsg}
                     </div>
                   )}
@@ -280,15 +292,23 @@ export default function CustomerFeedbackSection({
                     <input
                       type="text"
                       required
+                      maxLength={100}
+                      autoComplete="name"
+                      disabled={submitting}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. Ramesh Patil"
                       style={{
                         width: '100%',
-                        padding: '0.65rem 0.85rem',
+                        boxSizing: 'border-box',
+                        padding: '0.8rem 0.9rem',
                         border: '1px solid #cbd5e1',
                         borderRadius: '8px',
-                        fontSize: '0.9rem'
+                        fontFamily: 'var(--font-sans, inherit)',
+                        fontSize: '1rem',
+                        lineHeight: 1.5,
+                        color: '#1f2937',
+                        outlineColor: '#059669'
                       }}
                     />
                   </div>
@@ -300,20 +320,23 @@ export default function CustomerFeedbackSection({
                     <select
                       value={serviceUsed}
                       onChange={(e) => setServiceUsed(e.target.value)}
+                      disabled={submitting}
                       style={{
                         width: '100%',
-                        padding: '0.65rem 0.85rem',
+                        boxSizing: 'border-box',
+                        padding: '0.75rem 0.9rem',
                         border: '1px solid #cbd5e1',
                         borderRadius: '8px',
-                        fontSize: '0.9rem'
+                        fontFamily: 'var(--font-sans, inherit)',
+                        fontSize: '0.98rem',
+                        lineHeight: 1.5,
+                        color: '#1f2937'
                       }}
                     >
                       <option value="Car Decoration">Car Decoration</option>
-                      <option value="Haar & Varmala">Haar & Varmala</option>
-                      <option value="Wedding & Engagement">Wedding & Engagement Decoration</option>
-                      <option value="Bouquets & Gifts">Bouquets & Gifts</option>
-                      <option value="Entrance Flower Decoration">Entrance Flower Decoration</option>
-                      <option value="Fresh Daily Flowers">Fresh Daily Flowers</option>
+                      <option value="Car & Bus Flower Garlands">Car & Bus Flower Garlands</option>
+                      <option value="Wedding & Varmala">Wedding & Varmala</option>
+                      <option value="Flower Garlands & Custom Orders">Flower Garlands & Custom Orders</option>
                     </select>
                   </div>
 
@@ -321,17 +344,25 @@ export default function CustomerFeedbackSection({
                     <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.3rem' }}>
                       Rating
                     </label>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <div role="radiogroup" aria-label="Review rating" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', alignItems: 'center' }}>
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
                           key={star}
                           type="button"
                           onClick={() => setRating(star)}
+                          disabled={submitting}
+                          aria-label={`${star} star${star === 1 ? '' : 's'}`}
+                          aria-pressed={rating === star}
                           style={{
                             background: 'transparent',
                             border: 'none',
                             cursor: 'pointer',
-                            padding: '4px'
+                            padding: '0.35rem',
+                            minWidth: '40px',
+                            minHeight: '40px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
                           }}
                         >
                           <Star
@@ -353,24 +384,33 @@ export default function CustomerFeedbackSection({
                     </label>
                     <textarea
                       required
+                      maxLength={3000}
+                      disabled={submitting}
                       rows={3}
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
                       placeholder="Write your genuine experience with our flower service..."
                       style={{
                         width: '100%',
-                        padding: '0.65rem 0.85rem',
+                        boxSizing: 'border-box',
+                        padding: '0.8rem 0.9rem',
                         border: '1px solid #cbd5e1',
                         borderRadius: '8px',
-                        fontSize: '0.9rem'
+                        fontFamily: 'var(--font-sans, inherit)',
+                        fontSize: '1rem',
+                        lineHeight: 1.55,
+                        color: '#1f2937',
+                        resize: 'vertical',
+                        outlineColor: '#059669'
                       }}
                     />
                   </div>
 
-                  <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'flex-end' }}>
                     <button
                       type="button"
                       onClick={() => setShowReviewModal(false)}
+                      disabled={submitting}
                       style={{
                         padding: '0.65rem 1rem',
                         borderRadius: '8px',
@@ -386,7 +426,7 @@ export default function CustomerFeedbackSection({
                       type="submit"
                       disabled={submitting}
                       className="btn btn-primary"
-                      style={{ padding: '0.65rem 1.25rem', fontSize: '0.88rem' }}
+                      style={{ padding: '0.75rem 1.25rem', fontSize: '0.95rem', minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem' }}
                     >
                       <Send size={15} />
                       <span>{submitting ? 'Submitting...' : 'Submit Review'}</span>

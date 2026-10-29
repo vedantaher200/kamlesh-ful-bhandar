@@ -15,7 +15,9 @@ router.post('/', submitReview);
 
 router.get('/all', authenticateAdmin, getAllReviews);
 router.put('/:id', authenticateAdmin, updateReviewStatus);
+router.patch('/:id', authenticateAdmin, updateReviewStatus);
 router.put('/:id/status', authenticateAdmin, updateReviewStatus);
+router.patch('/:id/status', authenticateAdmin, updateReviewStatus);
 router.delete('/:id', authenticateAdmin, deleteReview);
 
 export default router;

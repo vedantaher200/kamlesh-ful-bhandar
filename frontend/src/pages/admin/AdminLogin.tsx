@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Flower, Lock, Mail, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Flower, Lock, Key, Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export default function AdminLogin() {
-  const [email, setEmail] = useState('admin@kamleshfulbhandar.com');
-  const [password, setPassword] = useState('Admin@123');
+  const [adminKey, setAdminKey] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -14,14 +15,21 @@ export default function AdminLogin() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
 
+    const trimmedKey = adminKey.trim();
+    if (!trimmedKey || !password) {
+      setError('Please provide both the Admin Key and Password.');
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      await login(email, password);
+      await login(trimmedKey, password);
       navigate('/admin/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Invalid email or password.');
+      setError(err.message || 'Invalid admin key or password.');
     } finally {
       setLoading(false);
     }
@@ -38,7 +46,7 @@ export default function AdminLogin() {
             Admin Portal
           </h2>
           <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
-            Kamlesh Ful Bhandar Management Console
+            Kamlesh Ful Bhandar Secure Management Console
           </p>
         </div>
 
@@ -51,39 +59,57 @@ export default function AdminLogin() {
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '1.25rem' }}>
-            <label style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.4rem', color: 'var(--color-primary-dark)' }}>
-              Email Address
+            <label htmlFor="adminKey" style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.4rem', color: 'var(--color-primary-dark)' }}>
+              Admin Key
             </label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', border: '1.5px solid var(--color-cream-border)', borderRadius: 'var(--radius-sm)', padding: '0.75rem 1rem', background: 'var(--color-cream)' }}>
-              <Mail size={18} color="var(--color-text-muted)" />
+              <Key size={18} color="var(--color-text-muted)" />
               <input
-                type="email"
+                id="adminKey"
+                name="adminKey"
+                type="text"
                 required
-                style={{ border: 'none', background: 'transparent', width: '100%', outline: 'none' }}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="username"
+                placeholder="Enter your admin access key"
+                style={{ border: 'none', background: 'transparent', width: '100%', outline: 'none', fontSize: '0.95rem' }}
+                value={adminKey}
+                onChange={(e) => setAdminKey(e.target.value)}
               />
             </div>
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.4rem', color: 'var(--color-primary-dark)' }}>
+            <label htmlFor="adminPassword" style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.4rem', color: 'var(--color-primary-dark)' }}>
               Password
             </label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', border: '1.5px solid var(--color-cream-border)', borderRadius: 'var(--radius-sm)', padding: '0.75rem 1rem', background: 'var(--color-cream)' }}>
               <Lock size={18} color="var(--color-text-muted)" />
               <input
-                type="password"
+                id="adminPassword"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
                 required
-                style={{ border: 'none', background: 'transparent', width: '100%', outline: 'none' }}
+                autoComplete="current-password"
+                placeholder="Enter your admin password"
+                style={{ border: 'none', background: 'transparent', width: '100%', outline: 'none', fontSize: '0.95rem' }}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+              <button
+                type="button"
+                id="togglePasswordVisibility"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                onClick={() => setShowPassword(!showPassword)}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '0.2rem', color: 'var(--color-text-muted)' }}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 
           <button
             type="submit"
+            id="adminLoginSubmit"
             className="btn btn-primary"
             disabled={loading}
             style={{ width: '100%', padding: '0.9rem', fontSize: '1rem', marginBottom: '1.5rem' }}

@@ -182,13 +182,25 @@ export default function AdminProducts() {
     setFormError('');
 
     try {
+      const contactForPrice = isContactForPrice || priceType === 'CONTACT_FOR_PRICE';
+      const parsedPrice = contactForPrice ? null : Number(price);
+      if (!name.trim() || !description.trim() || !categoryId) {
+        throw new Error('Product name, category, and description are required.');
+      }
+      if (!contactForPrice && (price.trim() === '' || !Number.isFinite(parsedPrice) || parsedPrice! < 0)) {
+        throw new Error('Enter a valid price of zero or more, or select Contact for Price.');
+      }
+      if (!imageFile && !image.trim()) throw new Error('Please select a product photo.');
+
       let finalImageUrl = image;
+      let finalImagePublicId = editingProduct?.imagePublicId || undefined;
 
       // Upload primary image if file selected
       if (imageFile) {
         const uploadRes = await api.uploadImage(imageFile);
         if (uploadRes.success && uploadRes.url) {
           finalImageUrl = uploadRes.url;
+          finalImagePublicId = uploadRes.publicId;
         } else {
           throw new Error('Primary image upload failed.');
         }
@@ -204,13 +216,12 @@ export default function AdminProducts() {
         const uploadRes = await api.uploadImage(file);
         if (uploadRes.success && uploadRes.url) {
           uploadedAdditionalUrls.push(uploadRes.url);
+        } else {
+          throw new Error(`Photo upload failed for ${file.name}. The product was not saved.`);
         }
       }
 
       const allImagesList = [finalImageUrl, ...uploadedAdditionalUrls.filter((u) => u !== finalImageUrl)];
-
-      const contactForPrice = isContactForPrice || priceType === 'CONTACT_FOR_PRICE';
-      const parsedPrice = contactForPrice || price === '' ? null : parseFloat(price);
 
       const payload: any = {
         name: name.trim(),
@@ -230,6 +241,7 @@ export default function AdminProducts() {
         color: color.trim() || undefined,
         suitableFor: suitableFor.trim() || undefined,
         image: finalImageUrl,
+        imagePublicId: finalImagePublicId,
         images: allImagesList,
         whatsappMessage: whatsappMessage.trim() || undefined
       };
@@ -511,6 +523,7 @@ export default function AdminProducts() {
                   <input
                     type="file"
                     accept="image/*"
+                    required={!editingProduct && !image.trim()}
                     onChange={handleImageFileChange}
                     style={{ fontSize: '0.85rem' }}
                   />
@@ -656,6 +669,8 @@ export default function AdminProducts() {
                     <input
                       type="number"
                       step="1"
+                      min="0"
+                      required
                       placeholder="e.g. 8000"
                       className="form-control"
                       value={price}
@@ -765,6 +780,7 @@ export default function AdminProducts() {
                 </label>
                 <textarea
                   rows={3}
+                  required
                   className="form-control"
                   placeholder="Fresh flower description, usage notes, quality details..."
                   value={description}

@@ -32,7 +32,7 @@ Backend REST API (Node.js + Express + TypeScript)
         ↓  (Prisma ORM)
 PostgreSQL Database (Local & Cloud Supported)
         ↓
-Image Storage (Cloudinary + Local Disk Fallback)
+Image Storage (Cloudinary; uploads buffered in memory)
         ↓
 Admin Dashboard (Protected JWT Authentication)
 ```
@@ -40,7 +40,7 @@ Admin Dashboard (Protected JWT Authentication)
 - **Frontend:** React 18, Vite 6, TypeScript, React Router v6, Lucide React, Modern CSS Design Tokens.
 - **Backend:** Node.js, Express.js, TypeScript, Prisma ORM, JWT, bcryptjs, Multer.
 - **Database:** PostgreSQL (with relational schema for Users, Products, Categories, Services, Gallery, Bookings, Enquiries, Reviews, Offers, Settings).
-- **Storage:** Cloudinary integration with seamless local disk fallback storage (`/uploads`).
+- **Storage:** Product image uploads require Cloudinary so returned URLs remain durable across serverless instances. Local disk and `/tmp` are not used for new uploads.
 - **Authentication:** Salted bcrypt password hashing + JWT bearer tokens + Role-based middleware.
 
 ---
@@ -134,7 +134,7 @@ JWT_SECRET="kamlesh_super_secret_jwt_key_2026_nashik"
 JWT_EXPIRES_IN="7d"
 CORS_ORIGIN="http://localhost:3000"
 
-# Optional Cloudinary (Local storage fallback is active automatically if left empty)
+# Required for product image uploads (durable Cloudinary storage)
 CLOUDINARY_CLOUD_NAME=""
 CLOUDINARY_API_KEY=""
 CLOUDINARY_API_SECRET=""

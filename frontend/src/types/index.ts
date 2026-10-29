@@ -81,6 +81,8 @@ export interface GalleryImage {
   image: string;
   imagePublicId?: string | null;
   description?: string | null;
+  price?: number | null;
+  priceMode?: 'FIXED' | 'ENQUIRY_ONLY';
   isPublished: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -101,7 +103,7 @@ export interface Booking {
   productName?: string | null;
   budget?: string | null;
   message?: string | null;
-  status: 'NEW' | 'CONTACTED' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
+  status: 'NEW' | 'PENDING' | 'CONTACTED' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
   isDateBlocked: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -132,6 +134,7 @@ export interface Review {
   customerName: string;
   rating: number;
   comment: string;
+  serviceUsed?: string | null;
   isApproved: boolean;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   createdAt: string;

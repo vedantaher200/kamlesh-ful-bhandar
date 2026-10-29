@@ -4,6 +4,7 @@ import { Car, MessageCircle, ArrowLeft, Sparkles, Phone } from 'lucide-react';
 import { api, createWhatsAppUrl } from '../services/api';
 import { CarDecorationPost } from '../types/index';
 import LightboxModal, { LightboxImageItem } from '../components/LightboxModal';
+import CarDecorationEnquiryButton, { getCarDecorationPrice } from '../components/CarDecorationEnquiryButton';
 
 export default function CarDecorationPage() {
   const [posts, setPosts] = useState<CarDecorationPost[]>([]);
@@ -42,7 +43,9 @@ export default function CarDecorationPage() {
     categoryLabel: 'Car Decoration',
     subCategory: 'Car Decoration',
     altText: p.title,
-    priceText: p.priceText || (p.price ? `₹${p.price.toLocaleString('en-IN')}` : 'Price on Request'),
+    price: p.price,
+    description: p.description,
+    priceText: getCarDecorationPrice(p.price),
     floralStyle: p.description || 'Fresh Flower Decoration'
   }));
 
@@ -159,8 +162,7 @@ export default function CarDecorationPage() {
             }}
           >
             {posts.map((post, index) => {
-              const displayPrice = post.priceText || (post.price ? `₹${post.price.toLocaleString('en-IN')}` : 'Price on Request');
-              const whatsappMsg = `Hello Kamlesh Ful Bhandar, I saw this Car Decoration on your website ("${post.title}" - ${displayPrice}) and I would like to know availability and book.`;
+              const displayPrice = getCarDecorationPrice(post.price);
 
               return (
                 <div
@@ -269,11 +271,10 @@ export default function CarDecorationPage() {
                         </div>
                       </div>
 
-                      <a
-                        href={createWhatsAppUrl(whatsappMsg)}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <CarDecorationEnquiryButton
+                        item={post}
                         className="btn btn-whatsapp btn-sm"
+                        compact
                         style={{
                           padding: '0.5rem 0.9rem',
                           fontSize: '0.82rem',
@@ -282,10 +283,7 @@ export default function CarDecorationPage() {
                           gap: '0.4rem',
                           borderRadius: '6px'
                         }}
-                      >
-                        <MessageCircle size={15} />
-                        <span>Enquire on WhatsApp</span>
-                      </a>
+                      />
                     </div>
                   </div>
                 </div>

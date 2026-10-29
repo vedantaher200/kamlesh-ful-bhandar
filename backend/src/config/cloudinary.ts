@@ -17,7 +17,7 @@ if (isCloudinaryConfigured) {
   });
   console.log('✓ Cloudinary configured successfully.');
 } else {
-  console.log('ℹ Cloudinary credentials not detected; using local storage fallback for uploads.');
+  console.warn('Cloudinary is not configured; image uploads are disabled until durable storage credentials are set.');
 }
 
 export { cloudinary, isCloudinaryConfigured };

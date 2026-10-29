@@ -22,16 +22,39 @@ export const authenticateAdmin = async (req: AuthRequest, res: Response, next: N
     const token = authHeader.split(' ')[1];
     const secret = process.env.JWT_SECRET || 'kamlesh_default_jwt_secret';
 
-    const decoded = jwt.verify(token, secret) as { id: string; email: string; role: string };
+    const decoded = jwt.verify(token, secret) as { id: string; email?: string; role: string; name?: string };
 
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.id },
-      select: { id: true, name: true, email: true, role: true }
-    });
+    if (!decoded || decoded.role !== 'ADMIN') {
+      res.status(403).json({ success: false, message: 'Access denied. Administrator privileges required.' });
+      return;
+    }
+
+    let user = null;
+    try {
+      if (decoded.id && decoded.id !== 'admin-configured') {
+        user = await prisma.user.findUnique({
+          where: { id: decoded.id },
+          select: { id: true, name: true, email: true, role: true }
+        });
+      }
+
+      if (!user) {
+        user = await prisma.user.findFirst({
+          where: { role: 'ADMIN' },
+          select: { id: true, name: true, email: true, role: true }
+        });
+      }
+    } catch (dbErr) {
+      console.warn('⚠️ [Auth Middleware] Database lookup failed, falling back to verified JWT claims:', dbErr);
+    }
 
     if (!user) {
-      res.status(401).json({ success: false, message: 'User not found or token invalid.' });
-      return;
+      user = {
+        id: decoded.id || 'admin-configured',
+        name: decoded.name || 'Kamlesh Ful Bhandar Admin',
+        email: decoded.email || 'admin@kamleshfulbhandar.com',
+        role: decoded.role || 'ADMIN'
+      };
     }
 
     if (user.role !== 'ADMIN') {

@@ -26,10 +26,16 @@ export const getGalleryImages = async (req: Request, res: Response): Promise<voi
 
 export const createGalleryImage = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { title, category, categoryName, image, imagePublicId, description, isPublished } = req.body;
+    const { title, category, categoryName, image, imagePublicId, description, isPublished, price, priceMode } = req.body;
 
     if (!title || !category || !image) {
       res.status(400).json({ success: false, message: 'Title, category, and image are required.' });
+      return;
+    }
+    const resolvedPriceMode = priceMode === 'FIXED' ? 'FIXED' : 'ENQUIRY_ONLY';
+    const parsedPrice = price === '' || price === null || price === undefined ? null : Number(price);
+    if (resolvedPriceMode === 'FIXED' && (parsedPrice === null || !Number.isFinite(parsedPrice) || parsedPrice < 0)) {
+      res.status(400).json({ success: false, message: 'Enter a valid non-negative price for fixed pricing.' });
       return;
     }
 
@@ -41,6 +47,8 @@ export const createGalleryImage = async (req: Request, res: Response): Promise<v
         image: image.trim(),
         imagePublicId: imagePublicId || null,
         description: description ? description.trim() : null,
+        price: resolvedPriceMode === 'FIXED' ? parsedPrice : null,
+        priceMode: resolvedPriceMode,
         isPublished: isPublished !== undefined ? Boolean(isPublished) : true
       }
     });
@@ -54,7 +62,7 @@ export const createGalleryImage = async (req: Request, res: Response): Promise<v
 export const updateGalleryImage = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const { title, category, categoryName, image, imagePublicId, description, isPublished } = req.body;
+    const { title, category, categoryName, image, imagePublicId, description, isPublished, price, priceMode } = req.body;
 
     const dataToUpdate: any = {};
     if (title) dataToUpdate.title = title.trim();
@@ -64,6 +72,16 @@ export const updateGalleryImage = async (req: Request, res: Response): Promise<v
     if (imagePublicId !== undefined) dataToUpdate.imagePublicId = imagePublicId;
     if (description !== undefined) dataToUpdate.description = description ? description.trim() : null;
     if (isPublished !== undefined) dataToUpdate.isPublished = Boolean(isPublished);
+    if (priceMode !== undefined || price !== undefined) {
+      const resolvedPriceMode = priceMode === 'FIXED' ? 'FIXED' : 'ENQUIRY_ONLY';
+      const parsedPrice = price === '' || price === null || price === undefined ? null : Number(price);
+      if (resolvedPriceMode === 'FIXED' && (parsedPrice === null || !Number.isFinite(parsedPrice) || parsedPrice < 0)) {
+        res.status(400).json({ success: false, message: 'Enter a valid non-negative price for fixed pricing.' });
+        return;
+      }
+      dataToUpdate.priceMode = resolvedPriceMode;
+      dataToUpdate.price = resolvedPriceMode === 'FIXED' ? parsedPrice : null;
+    }
 
     const updated = await prisma.galleryImage.update({
       where: { id },

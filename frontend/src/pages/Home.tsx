@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+﻿import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Sparkles,
@@ -26,6 +26,7 @@ import WhatsAppBookingModal from '../components/WhatsAppBookingModal';
 import LightboxModal, { LightboxImageItem } from '../components/LightboxModal';
 import RealCustomerGallery from '../components/RealCustomerGallery';
 import CustomerFeedbackSection from '../components/CustomerFeedbackSection';
+import CarDecorationEnquiryButton, { getCarDecorationPrice } from '../components/CarDecorationEnquiryButton';
 import { PORTFOLIO_ITEMS, PortfolioItem } from '../data/portfolioData';
 
 export default function Home() {
@@ -302,13 +303,10 @@ export default function Home() {
             }}
           >
             {[
-              { label: 'Car Decoration', icon: '🚗', href: '#section-car-decor', badge: 'Wedding & Groom' },
-              { label: 'Haar & Varmala', icon: '🌸', href: '#section-haar-varmala', badge: 'Handmade Malas' },
-              { label: 'Bouquets', icon: '💐', href: '#section-bouquets', badge: 'Celebrations' },
-              { label: 'Fresh Flowers', icon: '🌹', href: '#section-fresh-flowers', badge: 'Daily Harvest' },
-              { label: 'Entrance Decoration', icon: '🚪', href: '#section-entrance-decor', badge: 'Door & Arches' },
-              { label: 'Wedding & Engagement', icon: '💍', href: '#section-wedding-decor', badge: 'Stages & Mandap' },
-              { label: 'Special Occasion Gifts', icon: '🎁', href: '#section-birthday-gifts', badge: 'Custom Gifts' }
+              { label: 'Car Decoration', icon: '🚗', href: '#section-car-decor', badge: 'Car Styling' },
+              { label: 'Car & Bus Flower Garlands', icon: '🌼', href: '#our-work-gallery', badge: 'Vehicle Garlands' },
+              { label: 'Wedding & Varmala', icon: '💍', href: '#section-wedding-decor', badge: 'Wedding Flowers' },
+              { label: 'Flower Garlands & Custom Orders', icon: '🌸', href: '#our-work-gallery', badge: 'Made to Order' }
             ].map((sc, idx) => (
               <a
                 key={idx}
@@ -437,8 +435,7 @@ export default function Home() {
             }}
           >
             {carDecorations.map((post) => {
-              const displayPrice = post.priceText || (post.price ? `₹${post.price.toLocaleString('en-IN')}` : 'Price on Request');
-              const whatsappMsg = `Hello Kamlesh Ful Bhandar, I saw this Car Decoration design ("${post.title}" - ${displayPrice}) on your website and would like to know price and availability.`;
+              const displayPrice = getCarDecorationPrice(post.price);
 
               return (
                 <div
@@ -463,7 +460,9 @@ export default function Home() {
                         categoryLabel: 'Car Decoration',
                         subCategory: 'Car Decoration',
                         altText: p.title,
-                        priceText: p.priceText || (p.price ? `₹${p.price.toLocaleString('en-IN')}` : 'Price on Request'),
+                        priceText: getCarDecorationPrice(p.price),
+                        price: p.price,
+                        description: p.description,
                         floralStyle: p.description || 'Fresh Flower Decoration'
                       }));
                       const idx = carDecorations.findIndex((p) => p.id === post.id);
@@ -514,16 +513,12 @@ export default function Home() {
                         {displayPrice}
                       </span>
 
-                      <a
-                        href={createWhatsAppUrl(whatsappMsg)}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <CarDecorationEnquiryButton
+                        item={post}
                         className="btn btn-whatsapp btn-sm"
+                        compact
                         style={{ padding: '0.45rem 0.85rem', fontSize: '0.82rem', borderRadius: '6px' }}
-                      >
-                        <MessageCircle size={14} />
-                        <span>Enquire on WhatsApp</span>
-                      </a>
+                      />
                     </div>
                   </div>
                 </div>
@@ -806,7 +801,7 @@ export default function Home() {
           8. BOUQUETS & FLOWER GIFTS (Including Money Bouquet)
           Subcategories: Red Rose, Mixed, Birthday, Money Bouquet, Basket
           ========================================================= */}
-      <section id="section-bouquets" className="section-padding" style={{ background: '#ffffff' }}>
+      {false && <section id="section-bouquets" className="section-padding" style={{ background: '#ffffff' }}>
         <div className="container">
           <div className="section-header" style={{ marginBottom: '2rem' }}>
             <span className="section-tag">Handcrafted Bunches</span>
@@ -941,13 +936,13 @@ export default function Home() {
             </a>
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* =========================================================
           9. BIRTHDAY & SPECIAL OCCASION FLOWERS
           "Make It Special" -> "Customize Your Gift"
           ========================================================= */}
-      <section id="section-birthday-gifts" className="section-padding" style={{ background: '#f8fafc' }}>
+      {false && <section id="section-birthday-gifts" className="section-padding" style={{ background: '#f8fafc' }}>
         <div className="container">
           <div
             style={{
@@ -994,14 +989,14 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* =========================================================
           10. FRESH FLOWERS SECTION
           Roses, Marigold, Chrysanthemum, Jasmine / Mogra, Mixed, Seasonal, Loose
           CTA: "Ask About Today's Flowers"
           ========================================================= */}
-      <section id="section-fresh-flowers" className="section-padding" style={{ background: '#ffffff' }}>
+      {false && <section id="section-fresh-flowers" className="section-padding" style={{ background: '#ffffff' }}>
         <div className="container">
           <div className="section-header" style={{ marginBottom: '2.5rem' }}>
             <span className="section-tag">Daily Market Produce</span>
@@ -1070,14 +1065,14 @@ export default function Home() {
             </a>
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* =========================================================
           11. DOOR & ENTRANCE DECORATION
           Floral Door Frame, Home Entrance, Wedding Entrance, Premium Arch, Traditional
           CTA: "Book Entrance Decoration"
           ========================================================= */}
-      <section id="section-entrance-decor" className="section-padding" style={{ background: 'var(--color-cream)' }}>
+      {false && <section id="section-entrance-decor" className="section-padding" style={{ background: 'var(--color-cream)' }}>
         <div className="container">
           <div className="section-header" style={{ marginBottom: '2.5rem' }}>
             <span className="section-tag">Welcoming Portals</span>
@@ -1154,14 +1149,14 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* =========================================================
           12. OUR REAL CUSTOMER WORK
           "Some of our recent floral decoration work."
           Generic labels: Wedding Car Decoration, Wedding Floral Work, Entrance Decoration, etc.
           ========================================================= */}
-      <section className="section-padding" style={{ background: '#ffffff' }}>
+      {false && <section className="section-padding" style={{ background: '#ffffff' }}>
         <div className="container">
           <div className="section-header" style={{ marginBottom: '2.5rem' }}>
             <span className="section-tag">Recent Projects</span>
@@ -1206,7 +1201,7 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* =========================================================
           13. OUR WORK / REAL CUSTOMER GALLERY (Comprehensive Section)
@@ -1353,10 +1348,9 @@ export default function Home() {
                       style={{ width: '100%', padding: '0.65rem 0.5rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.82rem' }}
                     >
                       <option value="Car Decoration">Car Decoration</option>
-                      <option value="Haar & Varmala">Haar & Varmala</option>
-                      <option value="Wedding Flower Decoration">Wedding Decor</option>
-                      <option value="Bouquets & Gifts">Bouquets</option>
-                      <option value="Entrance Decoration">Entrance Decor</option>
+                      <option value="Car & Bus Flower Garlands">Car & Bus Flower Garlands</option>
+                      <option value="Wedding & Varmala">Wedding & Varmala</option>
+                      <option value="Flower Garlands & Custom Orders">Flower Garlands & Custom Orders</option>
                     </select>
 
                     <input

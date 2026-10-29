@@ -53,10 +53,10 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
 export const api = {
   // Auth
-  login: (email: string, password: string) =>
+  login: (adminKey: string, password: string) =>
     request<{ success: boolean; token: string; user: any }>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ adminKey, password })
     }),
   getMe: () => request<{ success: boolean; user: any }>('/auth/me'),
 
@@ -164,10 +164,11 @@ export const api = {
     }),
 
   // Services
-  getServices: (params?: { category?: string; featured?: boolean }) => {
+  getServices: (params?: { category?: string; featured?: boolean; limit?: number }) => {
     const query = new URLSearchParams();
     if (params?.category) query.append('category', params.category);
     if (params?.featured) query.append('featured', 'true');
+    if (params?.limit) query.append('limit', String(params.limit));
     return request<{ success: boolean; count: number; services: Service[] }>(`/services?${query.toString()}`);
   },
   createService: (data: Partial<Service>) =>
@@ -263,7 +264,7 @@ export const api = {
     request<{ success: boolean; count: number; reviews: Review[] }>('/reviews/approved'),
   getAllReviews: () =>
     request<{ success: boolean; count: number; reviews: Review[] }>('/reviews/all'),
-  submitReview: (data: { customerName: string; rating: number; comment: string }) =>
+  submitReview: (data: { customerName: string; rating: number; comment: string; serviceUsed?: string }) =>
     request<{ success: boolean; message: string; review: Review }>('/reviews', {
       method: 'POST',
       body: JSON.stringify(data)
@@ -364,6 +365,22 @@ export const createWhatsAppUrl = (message: string, number = '919921972936') => {
   const cleanNumber = number.replace(/\D/g, '');
   const encodedText = encodeURIComponent(message.trim());
   return `https://wa.me/${cleanNumber}?text=${encodedText}`;
+};
+
+let configuredWhatsAppNumber: string | null = null;
+let configuredWhatsAppNumberRequest: Promise<string> | null = null;
+
+export const getConfiguredWhatsAppNumber = (): Promise<string> => {
+  if (configuredWhatsAppNumber) return Promise.resolve(configuredWhatsAppNumber);
+  if (!configuredWhatsAppNumberRequest) {
+    configuredWhatsAppNumberRequest = api.getSettings()
+      .then(({ settings }) => {
+        configuredWhatsAppNumber = settings.whatsapp_number?.trim() || '919921972936';
+        return configuredWhatsAppNumber;
+      })
+      .catch(() => '919921972936');
+  }
+  return configuredWhatsAppNumberRequest;
 };
 
 export const formatPrice = (

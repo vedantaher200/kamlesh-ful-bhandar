@@ -114,6 +114,8 @@ model GalleryImage {
   image         String
   imagePublicId String?
   description   String?
+  price         Float?
+  priceMode     String   @default("ENQUIRY_ONLY") // FIXED, ENQUIRY_ONLY
   isPublished   Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

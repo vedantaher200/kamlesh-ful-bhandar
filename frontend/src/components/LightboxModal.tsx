@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { X, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
-import { createWhatsAppUrl } from '../services/api';
+import CarDecorationEnquiryButton from './CarDecorationEnquiryButton';
 
 export interface LightboxImageItem {
   id: string;
@@ -10,8 +10,11 @@ export interface LightboxImageItem {
   subCategory?: string;
   altText?: string;
   priceText?: string;
+  price?: number | null;
+  description?: string | null;
   suitableFor?: string;
   floralStyle?: string;
+  availability?: string | null;
 }
 
 interface LightboxModalProps {
@@ -84,8 +87,6 @@ export default function LightboxModal({
     }
     setTouchStartX(null);
   };
-
-  const whatsappMsg = `Hello Kamlesh Ful Bhandar, I saw this design on your website ("${currentItem.title}" - ${currentItem.categoryLabel || 'Floral Work'}) and I would like to know the price and availability.`;
 
   return (
     <div
@@ -297,23 +298,18 @@ export default function LightboxModal({
           </div>
 
           <div>
-            <a
-              href={createWhatsAppUrl(whatsappMsg)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-whatsapp"
-              style={{
-                padding: '0.55rem 1rem',
-                fontSize: '0.88rem',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                borderRadius: '8px'
+            <CarDecorationEnquiryButton
+              serviceLabel={currentItem.categoryLabel || currentItem.subCategory || 'Floral Design'}
+              item={{
+                id: currentItem.id,
+                title: currentItem.title,
+                image: currentItem.image,
+                description: currentItem.description || currentItem.floralStyle,
+                price: currentItem.price,
+                availability: currentItem.availability
               }}
-            >
-              <MessageCircle size={17} />
-              <span>Enquire on WhatsApp</span>
-            </a>
+              style={{ padding: '0.55rem 1rem', fontSize: '0.88rem', borderRadius: '8px' }}
+            />
           </div>
         </div>
       </div>

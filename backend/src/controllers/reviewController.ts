@@ -27,16 +27,24 @@ export const getAllReviews = async (_req: Request, res: Response): Promise<void>
 export const submitReview = async (req: Request, res: Response): Promise<void> => {
   try {
     const { customerName, rating, comment } = req.body;
-    if (!customerName || !rating || !comment) {
-      res.status(400).json({ success: false, message: 'Customer name, rating (1-5), and feedback are required.' });
+    const cleanName = typeof customerName === 'string' ? customerName.trim() : '';
+    const cleanComment = typeof comment === 'string' ? comment.trim() : '';
+    const numericRating = Number(rating);
+
+    if (!cleanName || !cleanComment || !Number.isInteger(numericRating) || numericRating < 1 || numericRating > 5) {
+      res.status(400).json({ success: false, message: 'Enter your name, a review, and a whole-number rating from 1 to 5.' });
+      return;
+    }
+    if (cleanName.length > 100 || cleanComment.length > 3000) {
+      res.status(400).json({ success: false, message: 'Name must be 100 characters or less and review must be 3,000 characters or less.' });
       return;
     }
 
     const review = await prisma.review.create({
       data: {
-        customerName: customerName.trim(),
-        rating: Math.min(5, Math.max(1, parseInt(String(rating)))),
-        comment: comment.trim(),
+        customerName: cleanName,
+        rating: numericRating,
+        comment: cleanComment,
         isApproved: false,
         status: 'PENDING'
       }
@@ -48,7 +56,14 @@ export const submitReview = async (req: Request, res: Response): Promise<void> =
       review
     });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: 'Failed to submit review.', error: error.message });
+    console.error('submitReview error:', error);
+    const databaseUnavailable = error?.code === 'P1001' || error?.errorCode === 'P1001' || /can't reach database server/i.test(String(error?.message || ''));
+    res.status(databaseUnavailable ? 503 : 500).json({
+      success: false,
+      message: databaseUnavailable
+        ? 'Reviews are temporarily unavailable because the database cannot be reached. Please try again later.'
+        : 'Failed to submit review. Please try again later.'
+    });
   }
 };
 

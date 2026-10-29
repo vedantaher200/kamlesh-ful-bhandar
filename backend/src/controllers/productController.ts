@@ -237,8 +237,15 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
       primaryImage = typeof images[0] === 'string' ? images[0] : images[0].url;
     }
 
-    if (!name || !categoryId || !primaryImage) {
-      res.status(400).json({ success: false, message: 'Name, Category, and primary Image are required.' });
+    const contactForPrice = Boolean(isContactForPrice || priceType === 'CONTACT_FOR_PRICE');
+    const parsedPrice = contactForPrice ? null : Number(price);
+
+    if (typeof name !== 'string' || !name.trim() || !categoryId || !primaryImage || typeof description !== 'string' || !description.trim()) {
+      res.status(400).json({ success: false, message: 'Product name, category, description, and primary image are required.' });
+      return;
+    }
+    if (!contactForPrice && (price === '' || price === null || price === undefined || parsedPrice === null || !Number.isFinite(parsedPrice) || parsedPrice < 0)) {
+      res.status(400).json({ success: false, message: 'Enter a valid price of zero or more, or select Contact for Price.' });
       return;
     }
 
@@ -255,11 +262,6 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
     while (await prisma.product.findUnique({ where: { slug: uniqueSlug } })) {
       uniqueSlug = `${baseSlug}-${count++}`;
     }
-
-    const contactForPrice = Boolean(isContactForPrice || priceType === 'CONTACT_FOR_PRICE');
-    const parsedPrice = contactForPrice || price === '' || price === null || price === undefined
-      ? null
-      : parseFloat(String(price));
 
     let resolvedAvailability = availability || 'AVAILABLE';
     if ((req.body as any).isAvailable !== undefined && !availability) {
@@ -362,6 +364,29 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
 
     const dataToUpdate: any = {};
 
+    if (name !== undefined && (typeof name !== 'string' || !name.trim())) {
+      res.status(400).json({ success: false, message: 'Product name is required.' });
+      return;
+    }
+    if (description !== undefined && (typeof description !== 'string' || !description.trim())) {
+      res.status(400).json({ success: false, message: 'Product description is required.' });
+      return;
+    }
+    if (categoryId !== undefined && !(await prisma.category.findUnique({ where: { id: categoryId } }))) {
+      res.status(400).json({ success: false, message: 'Invalid category specified.' });
+      return;
+    }
+    const contactPriceUpdate = isContactForPrice !== undefined || priceType !== undefined
+      ? Boolean(isContactForPrice || priceType === 'CONTACT_FOR_PRICE')
+      : existingProduct.isContactForPrice;
+    if (price !== undefined && !contactPriceUpdate) {
+      const parsed = Number(price);
+      if (price === '' || price === null || !Number.isFinite(parsed) || parsed < 0) {
+        res.status(400).json({ success: false, message: 'Enter a valid price of zero or more, or select Contact for Price.' });
+        return;
+      }
+    }
+
     if (name !== undefined) {
       dataToUpdate.name = name.trim();
       if (name.trim() !== existingProduct.name) {
@@ -391,9 +416,9 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
     if (priceType !== undefined) dataToUpdate.priceType = priceType;
 
     if (price !== undefined) {
-      dataToUpdate.price = dataToUpdate.isContactForPrice || price === '' || price === null
+      dataToUpdate.price = contactPriceUpdate || price === '' || price === null
         ? null
-        : parseFloat(String(price));
+        : Number(price);
     }
 
     if (availability !== undefined) {
