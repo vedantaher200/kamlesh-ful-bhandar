@@ -6,7 +6,7 @@
   "main": "server.mjs",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "prisma generate && tsc && esbuild src/server.ts --bundle --packages=external --platform=node --target=node20 --format=esm --external:@prisma/client --outfile=server.mjs",
+    "build": "prisma generate && tsc && esbuild src/server.ts --bundle --platform=node --target=node20 --format=esm --external:@prisma/client --outfile=server.mjs",
     "start": "node server.mjs",
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
