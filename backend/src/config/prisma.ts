@@ -15,7 +15,14 @@ function getPrismaClient(): PrismaClient {
     if (globalForPrisma.prisma) {
       _prismaInstance = globalForPrisma.prisma;
     } else {
-      const dbUrl = process.env.DATABASE_URL;
+      let dbUrl = process.env.DATABASE_URL;
+      if (dbUrl) {
+        if (dbUrl.includes('?sslmode') && !dbUrl.includes('sslmode=')) {
+          dbUrl = dbUrl.replace(/\?sslmode.*$/, '?sslmode=require');
+        } else if (!dbUrl.includes('sslmode=')) {
+          dbUrl += (dbUrl.includes('?') ? '&' : '?') + 'sslmode=require';
+        }
+      }
       _prismaInstance = new PrismaClient({
         datasources: dbUrl ? { db: { url: dbUrl } } : undefined,
         log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error']

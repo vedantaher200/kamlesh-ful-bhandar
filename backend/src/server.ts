@@ -156,8 +156,12 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
   });
 });
 
-// Start server in standalone / local environment only (never on serverless)
-if (!isServerlessRuntime) {
+// Start server: In Vercel Services, container, or standalone mode, Vercel sets process.env.PORT
+// and requires the Express app to listen on that port.
+// Only pure AWS Lambda function runtimes without PORT skip app.listen().
+const shouldListen = Boolean(process.env.PORT || !process.env.AWS_LAMBDA_FUNCTION_NAME);
+
+if (shouldListen) {
   const server = app.listen(PORT, () => {
     console.log(`🌸 Kamlesh Ful Bhandar Backend API listening on port ${PORT}`);
     console.log(`📡 Health Check: http://localhost:${PORT}/api/health`);
@@ -165,7 +169,9 @@ if (!isServerlessRuntime) {
 
   // Graceful shutdown
   process.on('SIGINT', async () => {
-    await prisma.$disconnect();
+    try {
+      await prisma.$disconnect();
+    } catch {}
     server.close(() => {
       console.log('Server stopped.');
       process.exit(0);

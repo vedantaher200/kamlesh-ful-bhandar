@@ -49788,7 +49788,14 @@ function getPrismaClient() {
     if (globalForPrisma.prisma) {
       _prismaInstance = globalForPrisma.prisma;
     } else {
-      const dbUrl = process.env.DATABASE_URL;
+      let dbUrl = process.env.DATABASE_URL;
+      if (dbUrl) {
+        if (dbUrl.includes("?sslmode") && !dbUrl.includes("sslmode=")) {
+          dbUrl = dbUrl.replace(/\?sslmode.*$/, "?sslmode=require");
+        } else if (!dbUrl.includes("sslmode=")) {
+          dbUrl += (dbUrl.includes("?") ? "&" : "?") + "sslmode=require";
+        }
+      }
       _prismaInstance = new PrismaClient({
         datasources: dbUrl ? { db: { url: dbUrl } } : void 0,
         log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"]
@@ -51911,13 +51918,17 @@ app.use((err, _req, res, _next) => {
     message: err.message || "Internal Server Error"
   });
 });
-if (!isServerlessRuntime) {
+var shouldListen = Boolean(process.env.PORT || !process.env.AWS_LAMBDA_FUNCTION_NAME);
+if (shouldListen) {
   const server = app.listen(PORT, () => {
     console.log(`\u{1F338} Kamlesh Ful Bhandar Backend API listening on port ${PORT}`);
     console.log(`\u{1F4E1} Health Check: http://localhost:${PORT}/api/health`);
   });
   process.on("SIGINT", async () => {
-    await prisma.$disconnect();
+    try {
+      await prisma.$disconnect();
+    } catch {
+    }
     server.close(() => {
       console.log("Server stopped.");
       process.exit(0);
