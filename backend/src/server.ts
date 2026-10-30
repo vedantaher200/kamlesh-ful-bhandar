@@ -156,12 +156,10 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
   });
 });
 
-// Start server: In Vercel Services, container, or standalone mode, Vercel sets process.env.PORT
-// and requires the Express app to listen on that port.
-// Only pure AWS Lambda function runtimes without PORT skip app.listen().
-const shouldListen = Boolean(process.env.PORT || !process.env.AWS_LAMBDA_FUNCTION_NAME);
-
-if (shouldListen) {
+// Start server: In local development or standalone mode, listen on PORT.
+// In Vercel serverless functions, Vercel executes the exported handler directly,
+// so app.listen() must NOT be called.
+if (!isServerless) {
   const server = app.listen(PORT, () => {
     console.log(`🌸 Kamlesh Ful Bhandar Backend API listening on port ${PORT}`);
     console.log(`📡 Health Check: http://localhost:${PORT}/api/health`);
