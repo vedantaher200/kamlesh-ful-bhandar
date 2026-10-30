@@ -69,6 +69,8 @@ const isServerlessRuntime = Boolean(
 );
 
 // Diagnostics ping endpoints
+app.get('/', (_req, res) => res.json({ status: 'ok', service: 'kamlesh-ful-bhandar-backend', time: new Date().toISOString() }));
+app.get('/api', (_req, res) => res.json({ status: 'ok', service: 'kamlesh-ful-bhandar-backend', time: new Date().toISOString() }));
 app.get('/api/ping', (_req, res) => res.json({ status: 'pong', time: new Date().toISOString() }));
 app.get('/ping', (_req, res) => res.json({ status: 'pong', time: new Date().toISOString() }));
 

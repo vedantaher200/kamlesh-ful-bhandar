@@ -24,15 +24,24 @@
   },
   "rewrites": [
     {
+      "source": "/api",
+      "destination": {
+        "service": "backend",
+        "path": "/api"
+      }
+    },
+    {
       "source": "/api/(.*)",
       "destination": {
-        "service": "backend"
+        "service": "backend",
+        "path": "/api/$1"
       }
     },
     {
       "source": "/uploads/(.*)",
       "destination": {
-        "service": "backend"
+        "service": "backend",
+        "path": "/uploads/$1"
       }
     },
     {
