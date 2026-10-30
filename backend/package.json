@@ -6,7 +6,7 @@
   "main": "server.mjs",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "prisma generate && tsc && esbuild src/server.ts --bundle --platform=node --target=node20 --format=esm --external:@prisma/client \"--banner:js=import { createRequire } from 'module'; const require = createRequire(import.meta.url);\" --outfile=server.mjs && esbuild src/server.ts --bundle --platform=node --target=node20 --format=esm --external:@prisma/client \"--banner:js=import { createRequire } from 'module'; const require = createRequire(import.meta.url);\" --outfile=server.js && node -e \"const fs = require('fs'); const path = require('path'); const src = path.resolve('node_modules/.prisma/client'); for (const f of fs.readdirSync(src)) if (f.endsWith('.node')) fs.copyFileSync(path.join(src, f), path.join('.', f));\"",
+    "build": "prisma generate && tsc && esbuild src/server.ts --bundle --platform=node --target=node20 --format=esm --external:@prisma/client \"--banner:js=import { createRequire } from 'module'; const require = createRequire(import.meta.url);\" --outfile=server.mjs && esbuild src/server.ts --bundle --platform=node --target=node20 --format=esm --external:@prisma/client \"--banner:js=import { createRequire } from 'module'; const require = createRequire(import.meta.url);\" --outfile=server.js",
     "start": "node server.mjs",
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
