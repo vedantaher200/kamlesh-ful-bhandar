@@ -178,3 +178,4 @@ if (!isServerless) {
 }
 
 export default app;
+export { app };
