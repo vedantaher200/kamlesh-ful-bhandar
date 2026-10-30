@@ -1,67 +1,30 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "services": {
-    "backend": {
-      "root": "backend",
-      "framework": "express",
-      "installCommand": "npm install --include=dev",
-      "buildCommand": "npm run prisma:generate && npm run build",
-      "entrypoint": "server.mjs"
-    },
-    "frontend": {
-      "root": "frontend",
-      "framework": "vite",
-      "installCommand": "npm install --include=dev",
-      "buildCommand": "npm run build",
-      "outputDirectory": "dist",
-      "rewrites": [
-        {
-          "source": "/(.*)",
-          "destination": "/index.html"
-        }
-      ]
+  "buildCommand": "npm run prisma:generate && npm run build",
+  "outputDirectory": "frontend/dist",
+  "functions": {
+    "api/*.js": {
+      "includeFiles": "backend/**",
+      "memory": 1024,
+      "maxDuration": 15
     }
   },
   "rewrites": [
     {
-      "source": "/api",
-      "destination": {
-        "service": "backend",
-        "path": "/api"
-      }
+      "source": "/api/(.*)",
+      "destination": "/api"
     },
     {
-      "source": "/api/(.*)",
-      "destination": {
-        "service": "backend",
-        "path": "/api/$1"
-      }
+      "source": "/api",
+      "destination": "/api"
     },
     {
       "source": "/uploads/(.*)",
-      "destination": {
-        "service": "backend",
-        "path": "/uploads/$1"
-      }
-    },
-    {
-      "source": "/assets/(.*)",
-      "destination": {
-        "service": "frontend"
-      }
-    },
-    {
-      "source": "/(.*\\.[a-zA-Z0-9]+)",
-      "destination": {
-        "service": "frontend"
-      }
+      "destination": "/api"
     },
     {
       "source": "/(.*)",
-      "destination": {
-        "service": "frontend",
-        "path": "/index.html"
-      }
+      "destination": "/index.html"
     }
   ]
 }

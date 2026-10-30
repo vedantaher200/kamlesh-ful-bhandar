@@ -50,3 +50,5 @@ Thumbs.db
 # Temporary & Native engine files
 *.node
 scratch/
+/src/
+api/schema.prisma
