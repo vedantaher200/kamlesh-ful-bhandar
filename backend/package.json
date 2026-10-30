@@ -6,7 +6,7 @@
   "main": "server.mjs",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "prisma generate && tsc && esbuild src/server.ts --bundle --platform=node --target=node20 --format=esm \"--banner:js=import { createRequire as __createReq } from 'module'; import { fileURLToPath as __f2p } from 'url'; import { dirname as __dname } from 'path'; var require = __createReq(import.meta.url); var __filename = __f2p(import.meta.url); var __dirname = __dname(__filename);\" --outfile=server-bundle.mjs",
+    "build": "prisma generate && tsc && esbuild src/server.ts --bundle --platform=node --target=node20 --format=esm \"--banner:js=import { createRequire as __createReq } from 'module'; import { fileURLToPath as __f2p } from 'url'; import { dirname as __dname } from 'path'; var require = __createReq(import.meta.url); var __filename = __f2p(import.meta.url); var __dirname = __dname(__filename);\" --outfile=server-bundle.mjs && node -e \"const fs=require('fs'); fs.readdirSync('src/generated/client').filter(f=>f.endsWith('.node')||f==='schema.prisma').forEach(f=>fs.copyFileSync('src/generated/client/'+f, f))\"",
     "start": "node server.mjs",
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",

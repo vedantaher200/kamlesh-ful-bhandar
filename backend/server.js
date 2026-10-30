@@ -1,55 +1,33 @@
 // Resilient Vercel serverless entrypoint for Kamlesh Ful Bhandar Backend API
-let app = null;
-let startupError = null;
+import app from './server-bundle.mjs';
 
-try {
-  const mod = await import('./server-bundle.mjs');
-  app = mod.default || mod.app || mod;
-} catch (err) {
-  startupError = {
-    name: err?.name || 'Error',
-    message: err?.message || String(err),
-    stack: err?.stack || ''
-  };
-  console.error('Fatal Backend Startup Error:', err);
+// If PORT is provided (e.g. Vercel Express service or standalone node), start listening on it
+const port = process.env.PORT || (!process.env.VERCEL ? 5000 : null);
+if (port && app && typeof app.listen === 'function') {
+  app.listen(port, () => {
+    console.log(`🌸 Kamlesh Ful Bhandar Backend API listening on port ${port}`);
+  });
 }
 
 export default function handler(req, res) {
-  if (startupError) {
+  try {
+    return app(req, res);
+  } catch (err) {
+    console.error('Unhandled request error:', err);
     res.statusCode = 500;
     res.setHeader('Content-Type', 'application/json');
-    return res.end(
+    res.end(
       JSON.stringify(
         {
           success: false,
-          status: 'startup_error',
-          error: startupError,
-          env: {
-            nodeVersion: process.version,
-            cwd: process.cwd(),
-            platform: process.platform,
-            hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
-            vercel: Boolean(process.env.VERCEL)
-          }
+          message: err?.message || 'Internal Server Error',
+          stack: err?.stack || ''
         },
         null,
         2
       )
     );
   }
-
-  if (typeof app === 'function') {
-    return app(req, res);
-  }
-
-  res.statusCode = 500;
-  res.setHeader('Content-Type', 'application/json');
-  return res.end(
-    JSON.stringify({
-      success: false,
-      message: 'App is not a callable request listener'
-    })
-  );
 }
 
-export { handler };
+export { handler, app };
