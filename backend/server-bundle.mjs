@@ -55516,26 +55516,26 @@ var require_multer = __commonJS({
 });
 
 // src/server.ts
-var import_express15 = __toESM(require_express2(), 1);
-var import_cors = __toESM(require_lib3(), 1);
-var import_dotenv2 = __toESM(require_main(), 1);
+var import_express15 = __toESM(require_express2());
+var import_cors = __toESM(require_lib3());
+var import_dotenv2 = __toESM(require_main());
 import path from "path";
 import os2 from "os";
 import { fileURLToPath } from "url";
 
 // src/routes/index.ts
-var import_express14 = __toESM(require_express2(), 1);
+var import_express14 = __toESM(require_express2());
 
 // src/routes/authRoutes.ts
-var import_express = __toESM(require_express2(), 1);
+var import_express = __toESM(require_express2());
 
 // src/controllers/authController.ts
-var import_bcryptjs = __toESM(require_bcryptjs(), 1);
-var import_jsonwebtoken = __toESM(require_jsonwebtoken(), 1);
+var import_bcryptjs = __toESM(require_bcryptjs());
+var import_jsonwebtoken = __toESM(require_jsonwebtoken());
 import crypto2 from "crypto";
 
 // src/config/prisma.ts
-var import_client = __toESM(require_client(), 1);
+var import_client = __toESM(require_client());
 var globalForPrisma = globalThis;
 if (!process.env.DATABASE_URL) {
   console.warn("\u26A0\uFE0F [Prisma] DATABASE_URL environment variable is not set. Ensure it is defined in your Vercel Project Settings.");
@@ -55737,7 +55737,7 @@ var getMe = async (req, res) => {
 };
 
 // src/middleware/auth.ts
-var import_jsonwebtoken2 = __toESM(require_jsonwebtoken(), 1);
+var import_jsonwebtoken2 = __toESM(require_jsonwebtoken());
 var authenticateAdmin = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -55795,7 +55795,7 @@ router.get("/me", authenticateAdmin, getMe);
 var authRoutes_default = router;
 
 // src/routes/productRoutes.ts
-var import_express2 = __toESM(require_express2(), 1);
+var import_express2 = __toESM(require_express2());
 
 // src/controllers/productController.ts
 var generateSlug = (text) => {
@@ -56223,7 +56223,7 @@ router2.delete("/:id", authenticateAdmin, deleteProduct);
 var productRoutes_default = router2;
 
 // src/routes/categoryRoutes.ts
-var import_express3 = __toESM(require_express2(), 1);
+var import_express3 = __toESM(require_express2());
 
 // src/controllers/categoryController.ts
 var generateSlug2 = (text) => {
@@ -56316,7 +56316,7 @@ router3.delete("/:id", authenticateAdmin, deleteCategory);
 var categoryRoutes_default = router3;
 
 // src/routes/serviceRoutes.ts
-var import_express4 = __toESM(require_express2(), 1);
+var import_express4 = __toESM(require_express2());
 
 // src/controllers/serviceController.ts
 var generateSlug3 = (text) => {
@@ -56416,7 +56416,7 @@ router4.delete("/:id", authenticateAdmin, deleteService);
 var serviceRoutes_default = router4;
 
 // src/routes/galleryRoutes.ts
-var import_express5 = __toESM(require_express2(), 1);
+var import_express5 = __toESM(require_express2());
 
 // src/controllers/galleryController.ts
 var getGalleryImages = async (req, res) => {
@@ -56519,7 +56519,7 @@ router5.delete("/:id", authenticateAdmin, deleteGalleryImage);
 var galleryRoutes_default = router5;
 
 // src/routes/enquiryRoutes.ts
-var import_express6 = __toESM(require_express2(), 1);
+var import_express6 = __toESM(require_express2());
 
 // src/controllers/enquiryController.ts
 var createEnquiry = async (req, res) => {
@@ -56625,7 +56625,7 @@ router6.delete("/:id", authenticateAdmin, deleteEnquiry);
 var enquiryRoutes_default = router6;
 
 // src/routes/bookingRoutes.ts
-var import_express7 = __toESM(require_express2(), 1);
+var import_express7 = __toESM(require_express2());
 
 // src/controllers/bookingController.ts
 var getBlockedAndBookedDates = async (_req, res) => {
@@ -56801,7 +56801,7 @@ router7.delete("/:id", authenticateAdmin, deleteBooking);
 var bookingRoutes_default = router7;
 
 // src/routes/reviewRoutes.ts
-var import_express8 = __toESM(require_express2(), 1);
+var import_express8 = __toESM(require_express2());
 
 // src/controllers/reviewController.ts
 var getApprovedReviews = async (_req, res) => {
@@ -56903,7 +56903,7 @@ router8.delete("/:id", authenticateAdmin, deleteReview);
 var reviewRoutes_default = router8;
 
 // src/routes/offerRoutes.ts
-var import_express9 = __toESM(require_express2(), 1);
+var import_express9 = __toESM(require_express2());
 
 // src/controllers/offerController.ts
 var getActiveOffers = async (_req, res) => {
@@ -56996,7 +56996,7 @@ router9.delete("/:id", authenticateAdmin, deleteOffer);
 var offerRoutes_default = router9;
 
 // src/routes/settingsRoutes.ts
-var import_express10 = __toESM(require_express2(), 1);
+var import_express10 = __toESM(require_express2());
 
 // src/controllers/settingsController.ts
 var getSettings = async (_req, res) => {
@@ -57092,11 +57092,11 @@ router10.put("/", authenticateAdmin, updateSettings);
 var settingsRoutes_default = router10;
 
 // src/routes/uploadRoutes.ts
-var import_express11 = __toESM(require_express2(), 1);
+var import_express11 = __toESM(require_express2());
 
 // src/config/cloudinary.ts
-var import_cloudinary = __toESM(require_cloudinary2(), 1);
-var import_dotenv = __toESM(require_main(), 1);
+var import_cloudinary = __toESM(require_cloudinary2());
+var import_dotenv = __toESM(require_main());
 import_dotenv.default.config();
 var isCloudinaryConfigured = Boolean(
   process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET
@@ -57148,7 +57148,7 @@ var handleImageUpload = async (req, res) => {
 };
 
 // src/middleware/upload.ts
-var import_multer = __toESM(require_multer(), 1);
+var import_multer = __toESM(require_multer());
 var fileFilter = (_req, file, cb) => {
   const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
   if (allowedMimeTypes.includes(file.mimetype)) cb(null, true);
@@ -57180,7 +57180,7 @@ router11.post("/image", authenticateAdmin, handleUpload, handleImageUpload);
 var uploadRoutes_default = router11;
 
 // src/routes/locationRoutes.ts
-var import_express12 = __toESM(require_express2(), 1);
+var import_express12 = __toESM(require_express2());
 
 // src/controllers/locationController.ts
 var getActiveLocations = async (req, res) => {
@@ -57341,7 +57341,7 @@ router12.delete("/:id", authenticateAdmin, deleteLocation);
 var locationRoutes_default = router12;
 
 // src/routes/carDecorationRoutes.ts
-var import_express13 = __toESM(require_express2(), 1);
+var import_express13 = __toESM(require_express2());
 
 // src/controllers/carDecorationController.ts
 var getPublishedCarDecorations = async (_req, res) => {
