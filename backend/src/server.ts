@@ -7,11 +7,21 @@ import { fileURLToPath } from 'url';
 import apiRouter from './routes/index.js';
 import { prisma } from './config/prisma.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const getFileAndDir = () => {
+  if (typeof __filename !== 'undefined' && typeof __dirname !== 'undefined') {
+    return { filename: __filename, dirname: __dirname };
+  }
+  try {
+    const f = fileURLToPath(import.meta.url);
+    return { filename: f, dirname: path.dirname(f) };
+  } catch {
+    return { filename: '', dirname: process.cwd() };
+  }
+};
+const { filename: currentFilename, dirname: currentDir } = getFileAndDir();
 
 // Load environment variables from all possible locations
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(currentDir, '../.env') });
 dotenv.config({ path: path.resolve(process.cwd(), 'backend/.env') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 dotenv.config();
@@ -56,7 +66,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve local uploaded images statically
 const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
-const uploadDir = isServerless ? path.join(os.tmpdir(), 'uploads') : path.resolve(__dirname, '../uploads');
+const uploadDir = isServerless ? path.join(os.tmpdir(), 'uploads') : path.resolve(currentDir, '../uploads');
 app.use('/uploads', express.static(uploadDir));
 
 // Determine runtime environment

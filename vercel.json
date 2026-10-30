@@ -5,8 +5,7 @@
       "root": "backend",
       "framework": "express",
       "installCommand": "npm install --include=dev",
-      "buildCommand": "npm run prisma:generate && npm run build",
-      "entrypoint": "server.mjs"
+      "buildCommand": "npm run prisma:generate && npm run build"
     },
     "frontend": {
       "root": "frontend",
@@ -26,22 +25,19 @@
     {
       "source": "/api",
       "destination": {
-        "service": "backend",
-        "path": "/api"
+        "service": "backend"
       }
     },
     {
       "source": "/api/(.*)",
       "destination": {
-        "service": "backend",
-        "path": "/api/$1"
+        "service": "backend"
       }
     },
     {
       "source": "/uploads/(.*)",
       "destination": {
-        "service": "backend",
-        "path": "/uploads/$1"
+        "service": "backend"
       }
     },
     {

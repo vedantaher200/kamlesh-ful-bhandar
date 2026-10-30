@@ -57564,9 +57564,19 @@ router14.use("/car-decorations", carDecorationRoutes_default);
 var routes_default = router14;
 
 // src/server.ts
-var __filename2 = fileURLToPath(import.meta.url);
-var __dirname2 = path.dirname(__filename2);
-import_dotenv2.default.config({ path: path.resolve(__dirname2, "../.env") });
+var getFileAndDir = () => {
+  if (typeof __filename !== "undefined" && typeof __dirname !== "undefined") {
+    return { filename: __filename, dirname: __dirname };
+  }
+  try {
+    const f = fileURLToPath(import.meta.url);
+    return { filename: f, dirname: path.dirname(f) };
+  } catch {
+    return { filename: "", dirname: process.cwd() };
+  }
+};
+var { filename: currentFilename, dirname: currentDir } = getFileAndDir();
+import_dotenv2.default.config({ path: path.resolve(currentDir, "../.env") });
 import_dotenv2.default.config({ path: path.resolve(process.cwd(), "backend/.env") });
 import_dotenv2.default.config({ path: path.resolve(process.cwd(), ".env") });
 import_dotenv2.default.config();
@@ -57601,7 +57611,7 @@ app.use(
 app.use(import_express15.default.json({ limit: "10mb" }));
 app.use(import_express15.default.urlencoded({ extended: true, limit: "10mb" }));
 var isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
-var uploadDir = isServerless ? path.join(os2.tmpdir(), "uploads") : path.resolve(__dirname2, "../uploads");
+var uploadDir = isServerless ? path.join(os2.tmpdir(), "uploads") : path.resolve(currentDir, "../uploads");
 app.use("/uploads", import_express15.default.static(uploadDir));
 var isServerlessRuntime = Boolean(
   process.env.VERCEL || process.env.VERCEL_ENV || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.LAMBDA_TASK_ROOT || process.env.NODE_ENV === "production"
