@@ -64,19 +64,17 @@ app.use(
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve local uploaded images statically
-const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
-const uploadDir = isServerless ? path.join(os.tmpdir(), 'uploads') : path.resolve(currentDir, '../uploads');
-app.use('/uploads', express.static(uploadDir));
-
 // Determine runtime environment
-const isServerlessRuntime = Boolean(
+const isServerless = Boolean(
   process.env.VERCEL ||
   process.env.VERCEL_ENV ||
   process.env.AWS_LAMBDA_FUNCTION_NAME ||
   process.env.LAMBDA_TASK_ROOT ||
   process.env.NODE_ENV === 'production'
 );
+const isServerlessRuntime = isServerless;
+const uploadDir = isServerless ? path.join(os.tmpdir(), 'uploads') : path.resolve(currentDir, '../uploads');
+app.use('/uploads', express.static(uploadDir));
 
 // Diagnostics ping endpoints
 app.get('/', (_req, res) => res.json({ status: 'ok', service: 'kamlesh-ful-bhandar-backend', time: new Date().toISOString() }));
@@ -168,8 +166,8 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 
 // Start server: In local development or standalone mode, listen on PORT.
 // In Vercel serverless functions, Vercel executes the exported handler directly,
-// so app.listen() must NOT be called.
-if (!isServerless) {
+// so app.listen() must NEVER be called in production or serverless environments.
+if (process.env.NODE_ENV !== 'production' && !isServerless) {
   const server = app.listen(PORT, () => {
     console.log(`🌸 Kamlesh Ful Bhandar Backend API listening on port ${PORT}`);
     console.log(`📡 Health Check: http://localhost:${PORT}/api/health`);
@@ -186,6 +184,11 @@ if (!isServerless) {
     });
   });
 }
+
+// Universal compatibility assignments for Express handler
+(app as any).default = app;
+(app as any).app = app;
+(app as any).handler = app;
 
 export default app;
 export { app };

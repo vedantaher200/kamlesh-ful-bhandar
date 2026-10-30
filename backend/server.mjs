@@ -57610,12 +57610,12 @@ app.use(
 );
 app.use(import_express15.default.json({ limit: "10mb" }));
 app.use(import_express15.default.urlencoded({ extended: true, limit: "10mb" }));
-var isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
-var uploadDir = isServerless ? path.join(os2.tmpdir(), "uploads") : path.resolve(currentDir, "../uploads");
-app.use("/uploads", import_express15.default.static(uploadDir));
-var isServerlessRuntime = Boolean(
+var isServerless = Boolean(
   process.env.VERCEL || process.env.VERCEL_ENV || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.LAMBDA_TASK_ROOT || process.env.NODE_ENV === "production"
 );
+var isServerlessRuntime = isServerless;
+var uploadDir = isServerless ? path.join(os2.tmpdir(), "uploads") : path.resolve(currentDir, "../uploads");
+app.use("/uploads", import_express15.default.static(uploadDir));
 app.get("/", (_req, res) => res.json({ status: "ok", service: "kamlesh-ful-bhandar-backend", time: (/* @__PURE__ */ new Date()).toISOString() }));
 app.get("/api", (_req, res) => res.json({ status: "ok", service: "kamlesh-ful-bhandar-backend", time: (/* @__PURE__ */ new Date()).toISOString() }));
 app.get("/api/ping", (_req, res) => res.json({ status: "pong", time: (/* @__PURE__ */ new Date()).toISOString() }));
@@ -57688,7 +57688,7 @@ app.use((err, _req, res, _next) => {
     message: err.message || "Internal Server Error"
   });
 });
-if (!isServerless) {
+if (process.env.NODE_ENV !== "production" && !isServerless) {
   const server = app.listen(PORT, () => {
     console.log(`\u{1F338} Kamlesh Ful Bhandar Backend API listening on port ${PORT}`);
     console.log(`\u{1F4E1} Health Check: http://localhost:${PORT}/api/health`);
@@ -57704,6 +57704,9 @@ if (!isServerless) {
     });
   });
 }
+app.default = app;
+app.app = app;
+app.handler = app;
 var server_default = app;
 export {
   app,
