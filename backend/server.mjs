@@ -28,10 +28,16 @@ if (!process.env.DATABASE_URL) {
 var _prismaInstance = null;
 function getPrismaClient() {
   if (!_prismaInstance) {
-    _prismaInstance = globalForPrisma.prisma || new PrismaClient({
-      log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"]
-    });
-    globalForPrisma.prisma = _prismaInstance;
+    if (globalForPrisma.prisma) {
+      _prismaInstance = globalForPrisma.prisma;
+    } else {
+      const dbUrl = process.env.DATABASE_URL;
+      _prismaInstance = new PrismaClient({
+        datasources: dbUrl ? { db: { url: dbUrl } } : void 0,
+        log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"]
+      });
+      globalForPrisma.prisma = _prismaInstance;
+    }
   }
   return _prismaInstance;
 }
@@ -2073,8 +2079,42 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 var isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
 var uploadDir = isServerless ? path.join(os.tmpdir(), "uploads") : path.resolve(__dirname, "../uploads");
 app.use("/uploads", express.static(uploadDir));
+var isServerlessRuntime = Boolean(
+  process.env.VERCEL || process.env.VERCEL_ENV || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.LAMBDA_TASK_ROOT || process.env.NODE_ENV === "production"
+);
 app.get("/api/ping", (_req, res) => res.json({ status: "pong", time: (/* @__PURE__ */ new Date()).toISOString() }));
 app.get("/ping", (_req, res) => res.json({ status: "pong", time: (/* @__PURE__ */ new Date()).toISOString() }));
+var handleDiag = async (_req, res) => {
+  let dbStatus = "untested";
+  let carCount = 0;
+  let dbError = null;
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    dbStatus = "connected";
+    carCount = await prisma.carDecorationPost.count();
+  } catch (err) {
+    dbStatus = "disconnected";
+    dbError = err.message || String(err);
+  }
+  res.json({
+    status: "ok",
+    timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+    nodeVersion: process.version,
+    platform: process.platform,
+    env: {
+      hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
+      isServerlessRuntime,
+      vercel: Boolean(process.env.VERCEL)
+    },
+    database: {
+      status: dbStatus,
+      carDecorationPostsCount: carCount,
+      error: dbError
+    }
+  });
+};
+app.get("/api/diag", handleDiag);
+app.get("/diag", handleDiag);
 var handleHealth = async (_req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
@@ -2112,9 +2152,6 @@ app.use((err, _req, res, _next) => {
     message: err.message || "Internal Server Error"
   });
 });
-var isServerlessRuntime = Boolean(
-  process.env.VERCEL || process.env.VERCEL_ENV || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.LAMBDA_TASK_ROOT || process.env.NODE_ENV === "production"
-);
 if (!isServerlessRuntime) {
   const server = app.listen(PORT, () => {
     console.log(`\u{1F338} Kamlesh Ful Bhandar Backend API listening on port ${PORT}`);

@@ -4,14 +4,14 @@
     "backend": {
       "root": "backend",
       "framework": "express",
-      "installCommand": "npm install",
+      "installCommand": "npm install --include=dev",
       "buildCommand": "npm run prisma:generate && npm run build",
       "entrypoint": "server.mjs"
     },
     "frontend": {
       "root": "frontend",
       "framework": "vite",
-      "installCommand": "npm install",
+      "installCommand": "npm install --include=dev",
       "buildCommand": "npm run build",
       "outputDirectory": "dist",
       "rewrites": [

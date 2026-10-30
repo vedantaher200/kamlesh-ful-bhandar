@@ -12,12 +12,16 @@ let _prismaInstance: PrismaClient | null = null;
 
 function getPrismaClient(): PrismaClient {
   if (!_prismaInstance) {
-    _prismaInstance =
-      globalForPrisma.prisma ||
-      new PrismaClient({
+    if (globalForPrisma.prisma) {
+      _prismaInstance = globalForPrisma.prisma;
+    } else {
+      const dbUrl = process.env.DATABASE_URL;
+      _prismaInstance = new PrismaClient({
+        datasources: dbUrl ? { db: { url: dbUrl } } : undefined,
         log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error']
       });
-    globalForPrisma.prisma = _prismaInstance;
+      globalForPrisma.prisma = _prismaInstance;
+    }
   }
   return _prismaInstance;
 }

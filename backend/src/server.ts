@@ -59,9 +59,52 @@ const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTI
 const uploadDir = isServerless ? path.join(os.tmpdir(), 'uploads') : path.resolve(__dirname, '../uploads');
 app.use('/uploads', express.static(uploadDir));
 
+// Determine runtime environment
+const isServerlessRuntime = Boolean(
+  process.env.VERCEL ||
+  process.env.VERCEL_ENV ||
+  process.env.AWS_LAMBDA_FUNCTION_NAME ||
+  process.env.LAMBDA_TASK_ROOT ||
+  process.env.NODE_ENV === 'production'
+);
+
 // Diagnostics ping endpoints
 app.get('/api/ping', (_req, res) => res.json({ status: 'pong', time: new Date().toISOString() }));
 app.get('/ping', (_req, res) => res.json({ status: 'pong', time: new Date().toISOString() }));
+
+// Comprehensive diagnostic endpoint to safely inspect runtime and database status
+const handleDiag = async (_req: express.Request, res: express.Response) => {
+  let dbStatus = 'untested';
+  let carCount = 0;
+  let dbError: string | null = null;
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    dbStatus = 'connected';
+    carCount = await prisma.carDecorationPost.count();
+  } catch (err: any) {
+    dbStatus = 'disconnected';
+    dbError = err.message || String(err);
+  }
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    nodeVersion: process.version,
+    platform: process.platform,
+    env: {
+      hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
+      isServerlessRuntime,
+      vercel: Boolean(process.env.VERCEL)
+    },
+    database: {
+      status: dbStatus,
+      carDecorationPostsCount: carCount,
+      error: dbError
+    }
+  });
+};
+
+app.get('/api/diag', handleDiag);
+app.get('/diag', handleDiag);
 
 // Health check endpoint
 const handleHealth = async (_req: express.Request, res: express.Response) => {
@@ -112,14 +155,6 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 });
 
 // Start server in standalone / local environment only (never on serverless)
-const isServerlessRuntime = Boolean(
-  process.env.VERCEL ||
-  process.env.VERCEL_ENV ||
-  process.env.AWS_LAMBDA_FUNCTION_NAME ||
-  process.env.LAMBDA_TASK_ROOT ||
-  process.env.NODE_ENV === 'production'
-);
-
 if (!isServerlessRuntime) {
   const server = app.listen(PORT, () => {
     console.log(`🌸 Kamlesh Ful Bhandar Backend API listening on port ${PORT}`);
