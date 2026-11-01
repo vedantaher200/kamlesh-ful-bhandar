@@ -57162,18 +57162,31 @@ var import_cloudinary = __toESM(require_cloudinary2());
 var import_dotenv = __toESM(require_main());
 import_dotenv.default.config();
 var isCloudinaryConfigured = Boolean(
-  process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET
+  process.env.CLOUDINARY_URL || process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET
 );
 if (isCloudinaryConfigured) {
-  import_cloudinary.v2.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
-  });
+  if (process.env.CLOUDINARY_URL) {
+  } else {
+    import_cloudinary.v2.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET
+    });
+  }
   console.log("\u2713 Cloudinary configured successfully.");
 } else {
-  console.warn("Cloudinary is not configured; image uploads are disabled until durable storage credentials are set.");
+  console.warn("Cloudinary is not configured; direct file uploads require CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET or CLOUDINARY_URL.");
 }
+var deleteFromCloudinary = async (publicId) => {
+  if (!isCloudinaryConfigured || !publicId) return false;
+  try {
+    const res = await import_cloudinary.v2.uploader.destroy(publicId);
+    return res.result === "ok";
+  } catch (err) {
+    console.warn(`[Cloudinary] Failed to delete asset ${publicId}:`, err);
+    return false;
+  }
+};
 
 // src/controllers/uploadController.ts
 var import_stream = require("stream");
@@ -57519,8 +57532,13 @@ var updateCarDecoration = async (req, res) => {
     if (req.file) {
       imageUrl = req.file.path || `/uploads/${req.file.filename}`;
       imagePublicId = req.file.filename;
-    } else if (req.body.image && typeof req.body.image === "string" && req.body.image.trim()) {
-      imageUrl = req.body.image.trim();
+    } else if (req.body.image !== void 0) {
+      imageUrl = typeof req.body.image === "string" ? req.body.image.trim() : "";
+      if (req.body.imagePublicId !== void 0) {
+        imagePublicId = req.body.imagePublicId || null;
+      } else if (imageUrl === "") {
+        imagePublicId = null;
+      }
     }
     const parsedPrice = price !== void 0 && price !== "" && !isNaN(Number(price)) ? Number(price) : price === null ? null : existing.price;
     const postStatus = status ? status === "UNPUBLISHED" ? "UNPUBLISHED" : "PUBLISHED" : existing.status;
@@ -57536,9 +57554,21 @@ var updateCarDecoration = async (req, res) => {
         status: postStatus
       }
     });
+    if (existing.imagePublicId && existing.imagePublicId !== imagePublicId) {
+      try {
+        const otherRef = await prisma.carDecorationPost.findFirst({
+          where: { imagePublicId: existing.imagePublicId, id: { not: id2 } }
+        });
+        if (!otherRef) {
+          await deleteFromCloudinary(existing.imagePublicId);
+        }
+      } catch (cloudErr) {
+        console.warn("Non-blocking cloud asset deletion error:", cloudErr);
+      }
+    }
     res.json({
       success: true,
-      message: "Car decoration post updated successfully",
+      message: "Changes saved successfully",
       post: updatedPost
     });
   } catch (error) {
@@ -57582,6 +57612,18 @@ var deleteCarDecoration = async (req, res) => {
     await prisma.carDecorationPost.delete({
       where: { id: id2 }
     });
+    if (existing.imagePublicId) {
+      try {
+        const otherRef = await prisma.carDecorationPost.findFirst({
+          where: { imagePublicId: existing.imagePublicId, id: { not: id2 } }
+        });
+        if (!otherRef) {
+          await deleteFromCloudinary(existing.imagePublicId);
+        }
+      } catch (cloudErr) {
+        console.warn("Non-blocking cloud asset deletion error on delete:", cloudErr);
+      }
+    }
     res.json({
       success: true,
       message: "Car decoration post deleted successfully"

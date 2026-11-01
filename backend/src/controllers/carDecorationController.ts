@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../config/prisma.js';
+import { deleteFromCloudinary } from '../config/cloudinary.js';
 
 // 1. Public: Get only PUBLISHED Car Decoration posts
 export const getPublishedCarDecorations = async (_req: Request, res: Response) => {
@@ -139,8 +140,14 @@ export const updateCarDecoration = async (req: Request, res: Response) => {
     if (req.file) {
       imageUrl = (req.file as any).path || `/uploads/${req.file.filename}`;
       imagePublicId = (req.file as any).filename;
-    } else if (req.body.image && typeof req.body.image === 'string' && req.body.image.trim()) {
-      imageUrl = req.body.image.trim();
+    } else if (req.body.image !== undefined) {
+      // Allow updating image or explicitly clearing it (empty string)
+      imageUrl = typeof req.body.image === 'string' ? req.body.image.trim() : '';
+      if (req.body.imagePublicId !== undefined) {
+        imagePublicId = req.body.imagePublicId || null;
+      } else if (imageUrl === '') {
+        imagePublicId = null;
+      }
     }
 
     const parsedPrice = price !== undefined && price !== '' && !isNaN(Number(price))
@@ -149,6 +156,7 @@ export const updateCarDecoration = async (req: Request, res: Response) => {
 
     const postStatus = status ? (status === 'UNPUBLISHED' ? 'UNPUBLISHED' : 'PUBLISHED') : existing.status;
 
+    // Update the exact existing record by ID (preserves id and original createdAt)
     const updatedPost = await prisma.carDecorationPost.update({
       where: { id },
       data: {
@@ -162,9 +170,23 @@ export const updateCarDecoration = async (req: Request, res: Response) => {
       }
     });
 
+    // Safe deletion: only delete old cloud image if replacement succeeded and not used elsewhere
+    if (existing.imagePublicId && existing.imagePublicId !== imagePublicId) {
+      try {
+        const otherRef = await prisma.carDecorationPost.findFirst({
+          where: { imagePublicId: existing.imagePublicId, id: { not: id } }
+        });
+        if (!otherRef) {
+          await deleteFromCloudinary(existing.imagePublicId);
+        }
+      } catch (cloudErr) {
+        console.warn('Non-blocking cloud asset deletion error:', cloudErr);
+      }
+    }
+
     res.json({
       success: true,
-      message: 'Car decoration post updated successfully',
+      message: 'Changes saved successfully',
       post: updatedPost
     });
   } catch (error: any) {
@@ -218,6 +240,19 @@ export const deleteCarDecoration = async (req: Request, res: Response) => {
     await prisma.carDecorationPost.delete({
       where: { id }
     });
+
+    if (existing.imagePublicId) {
+      try {
+        const otherRef = await prisma.carDecorationPost.findFirst({
+          where: { imagePublicId: existing.imagePublicId, id: { not: id } }
+        });
+        if (!otherRef) {
+          await deleteFromCloudinary(existing.imagePublicId);
+        }
+      } catch (cloudErr) {
+        console.warn('Non-blocking cloud asset deletion error on delete:', cloudErr);
+      }
+    }
 
     res.json({
       success: true,

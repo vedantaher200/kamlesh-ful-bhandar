@@ -10,7 +10,10 @@ import {
   Upload,
   CheckCircle2,
   AlertCircle,
-  ExternalLink
+  ExternalLink,
+  RotateCcw,
+  Image as ImageIcon,
+  AlertTriangle
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { CarDecorationPost } from '../../types/index';
@@ -34,6 +37,9 @@ export default function AdminCarDecorations() {
   const [imageUrl, setImageUrl] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
+  const [originalImage, setOriginalImage] = useState<string>('');
+  const [originalPublicId, setOriginalPublicId] = useState<string | null>(null);
+  const [imageAction, setImageAction] = useState<'KEEP' | 'REPLACE' | 'REMOVE'>('KEEP');
 
   const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -59,7 +65,7 @@ export default function AdminCarDecorations() {
 
   const showNotice = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
-    setTimeout(() => setNotification(null), 3500);
+    setTimeout(() => setNotification(null), 4000);
   };
 
   const handleOpenAddModal = () => {
@@ -71,6 +77,9 @@ export default function AdminCarDecorations() {
     setImageUrl('');
     setImageFile(null);
     setImagePreview('');
+    setOriginalImage('');
+    setOriginalPublicId(null);
+    setImageAction('REPLACE');
     setIsModalOpen(true);
   };
 
@@ -80,9 +89,12 @@ export default function AdminCarDecorations() {
     setDescription(post.description || '');
     setPrice(post.price !== null && post.price !== undefined ? String(post.price) : '');
     setStatus(post.status);
-    setImageUrl(post.image);
+    setImageUrl(post.image || '');
     setImageFile(null);
-    setImagePreview(post.image);
+    setImagePreview(post.image || '');
+    setOriginalImage(post.image || '');
+    setOriginalPublicId(post.imagePublicId || null);
+    setImageAction('KEEP');
     setIsModalOpen(true);
   };
 
@@ -91,6 +103,7 @@ export default function AdminCarDecorations() {
       const file = e.target.files[0];
       setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
+      setImageAction('REPLACE');
     }
   };
 
@@ -101,32 +114,51 @@ export default function AdminCarDecorations() {
       return;
     }
 
-    if (!editingPostId && !imageFile && !imageUrl.trim()) {
-      showNotice('error', 'Please upload an image or provide an image URL.');
-      return;
-    }
-
     setSaving(true);
     try {
-      let finalImageUrl = imageUrl;
+      let finalImageUrl = imageUrl.trim();
       let finalPublicId: string | undefined = undefined;
 
-      // If a new file was chosen, upload it first
-      if (imageFile) {
-        const uploadRes = await api.uploadImage(imageFile);
-        if (uploadRes.success) {
-          finalImageUrl = uploadRes.url;
-          finalPublicId = uploadRes.publicId;
-        } else {
-          throw new Error('Image upload failed.');
-        }
-      }
-
-      const numPrice = price ? parseFloat(price) : null;
-      const priceText = numPrice ? `₹${numPrice.toLocaleString('en-IN')}` : 'Price on Request';
-
       if (editingPostId) {
-        // UPDATE EXISTING POST (CRITICAL: SAME RECORD ID, NEVER CREATE DUPLICATE)
+        // --- 1. EDIT EXISTING POST (GUARANTEES SAME RECORD ID, NEVER DUPLICATES) ---
+        if (imageAction === 'REMOVE') {
+          finalImageUrl = '';
+          finalPublicId = undefined;
+        } else if (imageAction === 'REPLACE') {
+          if (imageFile) {
+            try {
+              const uploadRes = await api.uploadImage(imageFile);
+              if (uploadRes.success) {
+                finalImageUrl = uploadRes.url;
+                finalPublicId = uploadRes.publicId;
+              } else {
+                throw new Error(uploadRes.message || 'Image upload failed.');
+              }
+            } catch (uploadErr: any) {
+              setSaving(false);
+              showNotice(
+                'error',
+                `Image upload failed: ${uploadErr.message || 'Storage unavailable'}. Your existing post and photograph remain unchanged. You can also paste an image URL instead.`
+              );
+              return;
+            }
+          } else if (imageUrl.trim()) {
+            finalImageUrl = imageUrl.trim();
+            finalPublicId = undefined;
+          } else {
+            finalImageUrl = '';
+            finalPublicId = undefined;
+          }
+        } else {
+          // KEEP existing photograph
+          finalImageUrl = originalImage;
+          finalPublicId = originalPublicId || undefined;
+        }
+
+        const numPrice = price ? parseFloat(price) : null;
+        const priceText = numPrice ? `₹${numPrice.toLocaleString('en-IN')}` : 'Price on Request';
+
+        // Direct HTTP PUT to existing record ID
         const updateRes = await api.updateCarDecoration(editingPostId, {
           title: title.trim(),
           description: description.trim() || null,
@@ -138,10 +170,42 @@ export default function AdminCarDecorations() {
         });
 
         if (updateRes.success) {
-          showNotice('success', `Post "${title}" updated successfully.`);
+          showNotice('success', 'Changes saved successfully.');
+          setIsModalOpen(false);
+          await fetchPosts();
+        } else {
+          throw new Error(updateRes.message || 'Failed to update post.');
         }
       } else {
-        // CREATE NEW POST
+        // --- 2. CREATE BRAND NEW POST ---
+        if (!imageFile && !imageUrl.trim()) {
+          showNotice('error', 'Please upload an image or provide an image URL for the new post.');
+          setSaving(false);
+          return;
+        }
+
+        if (imageFile) {
+          try {
+            const uploadRes = await api.uploadImage(imageFile);
+            if (uploadRes.success) {
+              finalImageUrl = uploadRes.url;
+              finalPublicId = uploadRes.publicId;
+            } else {
+              throw new Error(uploadRes.message || 'Image upload failed.');
+            }
+          } catch (uploadErr: any) {
+            setSaving(false);
+            showNotice(
+              'error',
+              `Image upload failed: ${uploadErr.message || 'Storage unavailable'}. Set Cloudinary variables in Vercel or paste a direct image URL.`
+            );
+            return;
+          }
+        }
+
+        const numPrice = price ? parseFloat(price) : null;
+        const priceText = numPrice ? `₹${numPrice.toLocaleString('en-IN')}` : 'Price on Request';
+
         const createRes = await api.createCarDecoration({
           title: title.trim(),
           description: description.trim() || null,
@@ -153,18 +217,20 @@ export default function AdminCarDecorations() {
         });
 
         if (createRes.success) {
-          showNotice('success', `Car decoration post published successfully.`);
+          showNotice('success', 'Car decoration post published successfully.');
+          setIsModalOpen(false);
+          await fetchPosts();
+        } else {
+          throw new Error(createRes.message || 'Failed to create post.');
         }
       }
-
-      setIsModalOpen(false);
-      fetchPosts();
     } catch (err: any) {
       console.error(err);
       showNotice('error', err.message || 'Operation failed.');
     } finally {
       setSaving(false);
     }
+
   };
 
   const handleToggleStatus = async (post: CarDecorationPost) => {
@@ -566,6 +632,32 @@ export default function AdminCarDecorations() {
             </div>
 
             <form onSubmit={handleSubmit}>
+              {/* ID Preservation Badge when editing */}
+              {editingPostId && (
+                <div
+                  style={{
+                    background: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
+                    borderRadius: '8px',
+                    padding: '0.65rem 0.85rem',
+                    marginBottom: '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.55rem',
+                    fontSize: '0.8rem',
+                    color: '#166534'
+                  }}
+                >
+                  <CheckCircle2 size={16} color="#16a34a" style={{ flexShrink: 0 }} />
+                  <div>
+                    <strong>Editing Database Record:</strong> <code style={{ fontSize: '0.75rem', background: '#dcfce7', padding: '0.1rem 0.35rem', borderRadius: '4px' }}>{editingPostId}</code>
+                    <div style={{ fontSize: '0.73rem', color: '#15803d', marginTop: '0.15rem' }}>
+                      Updates existing record in-place. Database ID and post count are preserved.
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Title */}
               <div style={{ marginBottom: '1rem' }}>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.35rem' }}>
@@ -644,84 +736,365 @@ export default function AdminCarDecorations() {
                       fontSize: '0.9rem'
                     }}
                   >
-                    <option value="PUBLISHED">Published (Visible to users)</option>
-                    <option value="UNPUBLISHED">Unpublished (Hidden from users)</option>
+                    <option value="PUBLISHED">Published (Visible to customers)</option>
+                    <option value="UNPUBLISHED">Unpublished (Hidden from customers)</option>
                   </select>
                 </div>
               </div>
 
-              {/* Image Upload / URL */}
+              {/* Photograph Management Section */}
               <div style={{ marginBottom: '1.25rem' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.35rem' }}>
-                  Exact Car Decoration Image *
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.4rem' }}>
+                  Car Decoration Photograph
                 </label>
 
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '0.65rem' }}>
-                  <label
-                    style={{
-                      padding: '0.55rem 0.95rem',
-                      borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
-                      background: '#f8fafc',
-                      cursor: 'pointer',
-                      fontSize: '0.85rem',
-                      fontWeight: 600,
-                      color: '#334155',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.4rem'
-                    }}
-                  >
-                    <Upload size={16} />
-                    <span>Upload Image File</span>
+                {editingPostId ? (
+                  /* EDIT MODE IMAGE CONTROLS */
+                  <div>
+                    {imageAction === 'KEEP' && (
+                      <div
+                        style={{
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '10px',
+                          padding: '0.85rem',
+                          background: '#f8fafc',
+                          marginBottom: '0.6rem'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+                          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Current Photograph
+                          </span>
+                          <span style={{ fontSize: '0.72rem', color: '#047857', background: '#d1fae5', padding: '0.15rem 0.5rem', borderRadius: '999px', fontWeight: 600 }}>
+                            Retained on Save
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center' }}>
+                          <div style={{ width: '85px', height: '65px', borderRadius: '6px', overflow: 'hidden', border: '1px solid #cbd5e1', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            {originalImage ? (
+                              <img
+                                src={originalImage}
+                                alt={title}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                onError={(e) => {
+                                  (e.target as any).src =
+                                    'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="85" height="65"><rect width="100%" height="100%" fill="%23f1f5f9"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-size="10">No Image</text></svg>';
+                                }}
+                              />
+                            ) : (
+                              <span style={{ fontSize: '0.7rem', color: '#94a3b8', textAlign: 'center', padding: '0.2rem' }}>
+                                Neutral Placeholder
+                              </span>
+                            )}
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
+                            <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setImageAction('REPLACE');
+                                  setImageUrl('');
+                                  setImageFile(null);
+                                  setImagePreview('');
+                                }}
+                                style={{
+                                  padding: '0.4rem 0.75rem',
+                                  borderRadius: '6px',
+                                  border: '1px solid #0284c7',
+                                  background: '#f0f9ff',
+                                  color: '#0284c7',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.35rem'
+                                }}
+                              >
+                                <Upload size={13} />
+                                <span>Replace Photograph</span>
+                              </button>
+
+                              {originalImage && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setImageAction('REMOVE');
+                                    setImageUrl('');
+                                    setImageFile(null);
+                                    setImagePreview('');
+                                  }}
+                                  style={{
+                                    padding: '0.4rem 0.75rem',
+                                    borderRadius: '6px',
+                                    border: '1px solid #fecaca',
+                                    background: '#fef2f2',
+                                    color: '#dc2626',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.35rem'
+                                  }}
+                                >
+                                  <Trash2 size={13} />
+                                  <span>Remove Current Image</span>
+                                </button>
+                              )}
+                            </div>
+                            <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                              {originalImage
+                                ? 'Click Replace to upload a new photograph or paste an image URL.'
+                                : 'No photo currently set. The public website displays a clean neutral placeholder.'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {imageAction === 'REMOVE' && (
+                      <div
+                        style={{
+                          border: '1px dashed #f87171',
+                          borderRadius: '10px',
+                          padding: '0.85rem',
+                          background: '#fff5f5',
+                          marginBottom: '0.6rem'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#b91c1c', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <AlertCircle size={15} />
+                            Photograph Marked for Removal
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setImageAction('KEEP');
+                              setImageUrl(originalImage);
+                              setImagePreview(originalImage);
+                            }}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#0284c7',
+                              fontSize: '0.76rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem'
+                            }}
+                          >
+                            <RotateCcw size={12} />
+                            Undo / Keep Previous Image
+                          </button>
+                        </div>
+                        <p style={{ fontSize: '0.74rem', color: '#7f1d1d', margin: 0 }}>
+                          Upon saving, this post will have no photo. The customer website will automatically display an elegant neutral placeholder.
+                        </p>
+                      </div>
+                    )}
+
+                    {imageAction === 'REPLACE' && (
+                      <div
+                        style={{
+                          border: '1px solid #bae6fd',
+                          borderRadius: '10px',
+                          padding: '0.85rem',
+                          background: '#f0f9ff',
+                          marginBottom: '0.6rem'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0369a1', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <Upload size={14} />
+                            Select Replacement Image
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setImageAction('KEEP');
+                              setImageUrl(originalImage);
+                              setImageFile(null);
+                              setImagePreview(originalImage);
+                            }}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#64748b',
+                              fontSize: '0.76rem',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem'
+                            }}
+                          >
+                            <RotateCcw size={12} />
+                            Revert to Original
+                          </button>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', marginBottom: '0.5rem' }}>
+                          <label
+                            style={{
+                              padding: '0.45rem 0.85rem',
+                              borderRadius: '6px',
+                              border: '1px solid #cbd5e1',
+                              background: '#ffffff',
+                              cursor: 'pointer',
+                              fontSize: '0.8rem',
+                              fontWeight: 600,
+                              color: '#334155',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem'
+                            }}
+                          >
+                            <Upload size={14} />
+                            <span>Upload Image File</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleFileChange}
+                              style={{ display: 'none' }}
+                            />
+                          </label>
+
+                          <span style={{ fontSize: '0.78rem', color: '#64748b' }}>or paste direct image URL below</span>
+                        </div>
+
+                        <input
+                          type="url"
+                          value={imageUrl}
+                          onChange={(e) => {
+                            setImageUrl(e.target.value);
+                            setImagePreview(e.target.value);
+                          }}
+                          placeholder="https://... direct image URL"
+                          style={{
+                            width: '100%',
+                            padding: '0.55rem 0.75rem',
+                            borderRadius: '6px',
+                            border: '1px solid #cbd5e1',
+                            fontSize: '0.82rem',
+                            marginBottom: '0.5rem'
+                          }}
+                        />
+
+                        {imagePreview && (
+                          <div
+                            style={{
+                              position: 'relative',
+                              height: '130px',
+                              borderRadius: '8px',
+                              overflow: 'hidden',
+                              border: '1px solid #93c5fd',
+                              background: '#ffffff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            <span
+                              style={{
+                                position: 'absolute',
+                                top: '6px',
+                                left: '6px',
+                                background: 'rgba(2, 132, 199, 0.92)',
+                                color: '#ffffff',
+                                fontSize: '0.68rem',
+                                fontWeight: 700,
+                                padding: '0.15rem 0.45rem',
+                                borderRadius: '4px'
+                              }}
+                            >
+                              {imageFile ? 'New File Selected (Preview)' : 'URL Preview'}
+                            </span>
+                            <img
+                              src={imagePreview}
+                              alt="Replacement Preview"
+                              style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* CREATE NEW POST IMAGE CONTROLS */
+                  <div>
+                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <label
+                        style={{
+                          padding: '0.5rem 0.95rem',
+                          borderRadius: '8px',
+                          border: '1px solid #cbd5e1',
+                          background: '#f8fafc',
+                          cursor: 'pointer',
+                          fontSize: '0.84rem',
+                          fontWeight: 600,
+                          color: '#334155',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.4rem'
+                        }}
+                      >
+                        <Upload size={15} />
+                        <span>Upload Image File</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          style={{ display: 'none' }}
+                        />
+                      </label>
+
+                      <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>or paste URL below</span>
+                    </div>
+
                     <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      style={{ display: 'none' }}
+                      type="url"
+                      value={imageUrl}
+                      onChange={(e) => {
+                        setImageUrl(e.target.value);
+                        setImagePreview(e.target.value);
+                      }}
+                      placeholder="https://... direct image URL"
+                      style={{
+                        width: '100%',
+                        padding: '0.6rem 0.85rem',
+                        borderRadius: '8px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '0.85rem',
+                        marginBottom: '0.5rem'
+                      }}
                     />
-                  </label>
 
-                  <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>or paste URL below</span>
-                </div>
-
-                <input
-                  type="url"
-                  value={imageUrl}
-                  onChange={(e) => {
-                    setImageUrl(e.target.value);
-                    setImagePreview(e.target.value);
-                  }}
-                  placeholder="https://... or /uploads/..."
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '0.85rem',
-                    marginBottom: '0.65rem'
-                  }}
-                />
-
-                {/* Preview Thumbnail */}
-                {imagePreview && (
-                  <div
-                    style={{
-                      height: '140px',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      border: '1px solid #e2e8f0',
-                      background: '#f8fafc',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <img
-                      src={imagePreview}
-                      alt="Selected Preview"
-                      style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
-                    />
+                    {imagePreview && (
+                      <div
+                        style={{
+                          position: 'relative',
+                          height: '140px',
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                          border: '1px solid #e2e8f0',
+                          background: '#f8fafc',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <img
+                          src={imagePreview}
+                          alt="Selected Preview"
+                          style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
