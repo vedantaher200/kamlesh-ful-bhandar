@@ -55647,6 +55647,11 @@ function safeCompare(a, b2) {
   const hashB = import_crypto.default.createHash("sha256").update(b2).digest();
   return import_crypto.default.timingSafeEqual(hashA, hashB);
 }
+var cleanEnv = (val) => {
+  if (!val) return void 0;
+  const t = val.trim();
+  return t.replace(/^["']|["']$/g, "").trim();
+};
 var login = async (req, res) => {
   try {
     const { adminKey, admin_key, key, username, email, password } = req.body;
@@ -55660,84 +55665,67 @@ var login = async (req, res) => {
       });
       return;
     }
-    const envAdminKey = process.env.ADMIN_KEY?.trim();
-    const envPasswordHash = process.env.ADMIN_PASSWORD_HASH?.trim();
-    const envPasswordPlain = process.env.ADMIN_PASSWORD?.trim();
-    let isKeyValid = false;
-    if (envAdminKey) {
-      if (safeCompare(providedKey, envAdminKey) || safeCompare(providedKey.toLowerCase(), envAdminKey.toLowerCase())) {
-        isKeyValid = true;
+    const envAdminKey = cleanEnv(process.env.ADMIN_KEY);
+    const envPasswordHash = cleanEnv(process.env.ADMIN_PASSWORD_HASH);
+    const envPasswordPlain = cleanEnv(process.env.ADMIN_PASSWORD);
+    let authenticatedAdmin = null;
+    if (envAdminKey && (envPasswordHash || envPasswordPlain)) {
+      const isKeyMatch = safeCompare(providedKey, envAdminKey) || safeCompare(providedKey.toLowerCase(), envAdminKey.toLowerCase());
+      if (isKeyMatch) {
+        let isPassMatch = false;
+        if (envPasswordHash) {
+          isPassMatch = await import_bcryptjs.default.compare(rawPassword, envPasswordHash) || (trimmedPassword !== rawPassword ? await import_bcryptjs.default.compare(trimmedPassword, envPasswordHash) : false);
+        }
+        if (!isPassMatch && envPasswordPlain) {
+          isPassMatch = safeCompare(rawPassword, envPasswordPlain) || safeCompare(trimmedPassword, envPasswordPlain);
+        }
+        if (isPassMatch) {
+          authenticatedAdmin = {
+            id: "admin-configured",
+            name: "Kamlesh Flowers Admin",
+            email: envAdminKey,
+            role: "ADMIN"
+          };
+        }
       }
     }
-    let isPasswordValid = false;
-    if (envPasswordHash) {
-      const matchRaw = await import_bcryptjs.default.compare(rawPassword, envPasswordHash);
-      const matchTrimmed = trimmedPassword !== rawPassword ? await import_bcryptjs.default.compare(trimmedPassword, envPasswordHash) : false;
-      if (matchRaw || matchTrimmed) {
-        isPasswordValid = true;
-      }
-    }
-    if (!isPasswordValid && envPasswordPlain) {
-      if (safeCompare(rawPassword, envPasswordPlain) || safeCompare(trimmedPassword, envPasswordPlain)) {
-        isPasswordValid = true;
-      }
-    }
-    if (!isKeyValid || !isPasswordValid) {
+    if (!authenticatedAdmin) {
       try {
-        const dbAdmin = await prisma.user.findFirst({
+        const dbAdmins = await prisma.user.findMany({
           where: { role: "ADMIN" }
         });
-        if (dbAdmin) {
-          if (!isKeyValid) {
-            if (safeCompare(providedKey.toLowerCase(), dbAdmin.email.toLowerCase()) || providedKey.toLowerCase() === "admin") {
-              isKeyValid = true;
-            }
-          }
-          if (!isPasswordValid && dbAdmin.password) {
-            const matchDbRaw = await import_bcryptjs.default.compare(rawPassword, dbAdmin.password);
-            const matchDbTrimmed = trimmedPassword !== rawPassword ? await import_bcryptjs.default.compare(trimmedPassword, dbAdmin.password) : false;
-            if (matchDbRaw || matchDbTrimmed) {
-              isPasswordValid = true;
+        for (const admin of dbAdmins) {
+          const isKeyMatch = safeCompare(providedKey.toLowerCase(), admin.email.toLowerCase()) || safeCompare(providedKey, admin.email) || providedKey.toLowerCase() === "admin";
+          if (isKeyMatch && admin.password) {
+            const isPassMatch = await import_bcryptjs.default.compare(rawPassword, admin.password) || (trimmedPassword !== rawPassword ? await import_bcryptjs.default.compare(trimmedPassword, admin.password) : false);
+            if (isPassMatch) {
+              authenticatedAdmin = {
+                id: admin.id,
+                name: admin.name || "Kamlesh Flowers Admin",
+                email: admin.email,
+                role: admin.role
+              };
+              break;
             }
           }
         }
       } catch (dbErr) {
-        console.warn("\u26A0\uFE0F [AUTH] Database query during fallback credential evaluation failed:", dbErr);
+        console.warn("\u26A0\uFE0F [AUTH] Database query during admin authentication failed:", dbErr);
       }
     }
-    if (!isKeyValid || !isPasswordValid) {
+    if (!authenticatedAdmin) {
       res.status(401).json({
         success: false,
         message: "Invalid Admin Key or Password."
       });
       return;
     }
-    let adminUser = null;
-    try {
-      adminUser = await prisma.user.findFirst({
-        where: { role: "ADMIN" }
-      });
-      if (!adminUser) {
-        const salt = await import_bcryptjs.default.genSalt(10);
-        const hashedPassword = envPasswordHash || await import_bcryptjs.default.hash(rawPassword, salt);
-        adminUser = await prisma.user.create({
-          data: {
-            name: "Kamlesh Ful Bhandar Admin",
-            email: "admin@kamleshfulbhandar.com",
-            password: hashedPassword,
-            role: "ADMIN"
-          }
-        });
-      }
-    } catch (dbErr) {
-      console.warn("\u26A0\uFE0F [AUTH] Database unavailable during admin user lookup; using session fallback:", dbErr);
-    }
-    const adminId = adminUser?.id || "admin-configured";
-    const adminRole = adminUser?.role || "ADMIN";
-    const adminName = adminUser?.name || "Kamlesh Ful Bhandar Admin";
-    const adminEmail = adminUser?.email || "admin@kamleshfulbhandar.com";
-    const secret = process.env.JWT_SECRET || "kamlesh_default_jwt_secret";
-    const expiresIn = process.env.JWT_EXPIRES_IN || "7d";
+    const adminId = authenticatedAdmin.id;
+    const adminRole = authenticatedAdmin.role;
+    const adminName = authenticatedAdmin.name;
+    const adminEmail = authenticatedAdmin.email;
+    const secret = cleanEnv(process.env.JWT_SECRET) || "kamlesh_default_jwt_secret";
+    const expiresIn = cleanEnv(process.env.JWT_EXPIRES_IN) || "7d";
     const token = import_jsonwebtoken.default.sign(
       {
         id: adminId,
@@ -55789,9 +55777,9 @@ var getMe = async (req, res) => {
       success: true,
       user: user || {
         id: req.user.id,
-        name: req.user.name || "Kamlesh Ful Bhandar Admin",
+        name: req.user.name || "Kamlesh Flowers Admin",
         role: req.user.role || "ADMIN",
-        email: req.user.email || "admin@kamleshfulbhandar.com"
+        email: req.user.email || "admin@kamleshflowers.com"
       }
     });
   } catch (error) {
@@ -55809,7 +55797,7 @@ var authenticateAdmin = async (req, res, next) => {
       return;
     }
     const token = authHeader.split(" ")[1];
-    const secret = process.env.JWT_SECRET || "kamlesh_default_jwt_secret";
+    const secret = (process.env.JWT_SECRET || "kamlesh_default_jwt_secret").trim().replace(/^["']|["']$/g, "").trim();
     const decoded = import_jsonwebtoken2.default.verify(token, secret);
     if (!decoded || decoded.role !== "ADMIN") {
       res.status(403).json({ success: false, message: "Access denied. Administrator privileges required." });
@@ -55835,8 +55823,8 @@ var authenticateAdmin = async (req, res, next) => {
     if (!user) {
       user = {
         id: decoded.id || "admin-configured",
-        name: decoded.name || "Kamlesh Ful Bhandar Admin",
-        email: decoded.email || "admin@kamleshfulbhandar.com",
+        name: decoded.name || "Kamlesh Flowers Admin",
+        email: decoded.email || "admin@kamleshflowers.com",
         role: decoded.role || "ADMIN"
       };
     }

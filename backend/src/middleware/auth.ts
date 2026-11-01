@@ -20,7 +20,7 @@ export const authenticateAdmin = async (req: AuthRequest, res: Response, next: N
     }
 
     const token = authHeader.split(' ')[1];
-    const secret = process.env.JWT_SECRET || 'kamlesh_default_jwt_secret';
+    const secret = (process.env.JWT_SECRET || 'kamlesh_default_jwt_secret').trim().replace(/^["']|["']$/g, '').trim();
 
     const decoded = jwt.verify(token, secret) as { id: string; email?: string; role: string; name?: string };
 
@@ -51,8 +51,8 @@ export const authenticateAdmin = async (req: AuthRequest, res: Response, next: N
     if (!user) {
       user = {
         id: decoded.id || 'admin-configured',
-        name: decoded.name || 'Kamlesh Ful Bhandar Admin',
-        email: decoded.email || 'admin@kamleshfulbhandar.com',
+        name: decoded.name || 'Kamlesh Flowers Admin',
+        email: decoded.email || 'admin@kamleshflowers.com',
         role: decoded.role || 'ADMIN'
       };
     }
