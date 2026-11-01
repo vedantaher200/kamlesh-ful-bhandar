@@ -47,7 +47,10 @@ Thumbs.db
 *.sln
 *.sw?
 
-# Temporary & Native engine files
+# Temporary & Native engine files (allow Vercel serverless Linux query engine)
 *.node
+!backend/libquery_engine-rhel-openssl-3.0.x.so.node
+!backend/api/libquery_engine-rhel-openssl-3.0.x.so.node
+!backend/src/generated/client/libquery_engine-rhel-openssl-3.0.x.so.node
 scratch/
 /src/

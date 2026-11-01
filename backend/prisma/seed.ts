@@ -813,7 +813,7 @@ async function main() {
         description: 'Beautiful flower decoration for wedding car with fresh Dutch roses and lilies.',
         price: 5000,
         priceText: '₹5,000',
-        image: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=1000&q=80',
+        image: '',
         status: 'PUBLISHED'
       },
       {
@@ -837,7 +837,7 @@ async function main() {
         description: 'High-impact floral coverage with fresh marigold, rose garlands and side mirror accents.',
         price: 4200,
         priceText: '₹4,200',
-        image: 'https://images.unsplash.com/photo-1519225424987-4340d8aa8f61?auto=format&fit=crop&w=1000&q=80',
+        image: '',
         status: 'PUBLISHED'
       },
       {
@@ -845,10 +845,11 @@ async function main() {
         description: 'Refined minimalist floral accents on four doors, side mirrors and front bonnet.',
         price: 3200,
         priceText: '₹3,200',
-        image: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1000&q=80',
+        image: '',
         status: 'PUBLISHED'
       }
     ];
+
 
     for (const post of initialCarPosts) {
       await prisma.carDecorationPost.create({ data: post });

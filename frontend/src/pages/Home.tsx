@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Sparkles,
@@ -27,7 +27,9 @@ import LightboxModal, { LightboxImageItem } from '../components/LightboxModal';
 import RealCustomerGallery from '../components/RealCustomerGallery';
 import CustomerFeedbackSection from '../components/CustomerFeedbackSection';
 import CarDecorationEnquiryButton, { getCarDecorationPrice } from '../components/CarDecorationEnquiryButton';
+import SafeCarImage, { isUnrelatedOrBrokenCarImage } from '../components/SafeCarImage';
 import { PORTFOLIO_ITEMS, PortfolioItem } from '../data/portfolioData';
+
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -450,9 +452,11 @@ export default function Home() {
                     flexDirection: 'column'
                   }}
                 >
-                  <div
-                    style={{ position: 'relative', height: '230px', cursor: 'pointer', backgroundColor: '#f1f5f9' }}
-                    onClick={() => {
+                  <SafeCarImage
+                    src={post.image}
+                    alt={post.title}
+                    height="230px"
+                    onClick={!isUnrelatedOrBrokenCarImage(post.image) ? () => {
                       const convertedList: LightboxImageItem[] = carDecorations.map((p) => ({
                         id: p.id,
                         title: p.title,
@@ -469,30 +473,9 @@ export default function Home() {
                       setLightboxItems(convertedList);
                       setLightboxIndex(idx >= 0 ? idx : 0);
                       setIsLightboxOpen(true);
-                    }}
-                  >
-                    <img
-                      src={post.image}
-                      alt={post.title}
-                      loading="lazy"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                    <span
-                      style={{
-                        position: 'absolute',
-                        bottom: '12px',
-                        right: '12px',
-                        background: 'rgba(255, 255, 255, 0.92)',
-                        color: 'var(--color-primary-dark)',
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        padding: '0.2rem 0.55rem',
-                        borderRadius: '6px'
-                      }}
-                    >
-                      Tap to zoom
-                    </span>
-                  </div>
+                    } : undefined}
+                  />
+
 
                   <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
                     <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.25rem' }}>

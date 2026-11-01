@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import os from 'os';
 import { fileURLToPath } from 'url';
 import apiRouter from './routes/index.js';
@@ -83,6 +84,29 @@ app.get('/api/ping', (_req, res) => res.json({ status: 'pong', time: new Date().
 app.get('/ping', (_req, res) => res.json({ status: 'pong', time: new Date().toISOString() }));
 
 // Comprehensive diagnostic endpoint to safely inspect runtime and database status
+const findEngines = (dir: string, maxDepth = 4, depth = 0): string[] => {
+  const found: string[] = [];
+  if (depth > maxDepth) return found;
+  try {
+    if (!fs.existsSync(dir)) return found;
+    const entries = fs.readdirSync(dir);
+    for (const entry of entries) {
+      if (entry === '.git') continue;
+      const full = path.join(dir, entry);
+      if (entry.includes('query_engine') || entry.endsWith('.node') || entry.endsWith('.prisma')) {
+        found.push(full);
+      }
+      try {
+        const stat = fs.statSync(full);
+        if (stat.isDirectory()) {
+          found.push(...findEngines(full, maxDepth, depth + 1));
+        }
+      } catch {}
+    }
+  } catch {}
+  return found;
+};
+
 const handleDiag = async (_req: express.Request, res: express.Response) => {
   let dbStatus = 'untested';
   let carCount = 0;
@@ -95,15 +119,24 @@ const handleDiag = async (_req: express.Request, res: express.Response) => {
     dbStatus = 'disconnected';
     dbError = err.message || String(err);
   }
+
+  const cwdEngines = findEngines(process.cwd());
+  const taskEngines = process.platform === 'linux' ? findEngines('/var/task') : [];
+
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     nodeVersion: process.version,
     platform: process.platform,
+    cwd: process.cwd(),
     env: {
       hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
       isServerlessRuntime,
       vercel: Boolean(process.env.VERCEL)
+    },
+    engineFiles: {
+      inCwd: cwdEngines,
+      inVarTask: taskEngines
     },
     database: {
       status: dbStatus,

@@ -13,10 +13,13 @@ export default function Footer() {
               <div className="brand-icon" style={{ width: 36, height: 36 }}>
                 <Flower size={20} />
               </div>
-              <h3 style={{ margin: 0 }}>Kamlesh Ful Bhandar</h3>
+              <div className="brand-title-wrap">
+                <h3 style={{ margin: 0, fontFamily: 'var(--font-serif)', color: '#ffffff' }}>Kamlesh Flowers</h3>
+                <span className="brand-tagline" style={{ fontSize: '0.68rem', letterSpacing: '0.12em', color: 'var(--color-gold)' }}>NASHIK • FLOWER & DECOR</span>
+              </div>
             </div>
-            <p>Flowers • Decoration • Weddings • Events</p>
             <p className="footer-bio">
+
               Handcrafted floral styling, wedding stage decors, fresh garlands, and bouquets crafted with care for families across Nashik, Maharashtra.
             </p>
           </div>
@@ -83,9 +86,10 @@ export default function Footer() {
         </div>
 
         <div className="footer-bottom">
-          <p>© 2026 Kamlesh Ful Bhandar. All rights reserved.</p>
+          <p>© 2026 Kamlesh Flowers. All rights reserved.</p>
           <p>Pawan Nagar, Nashik, Maharashtra</p>
         </div>
+
       </div>
     </footer>
   );

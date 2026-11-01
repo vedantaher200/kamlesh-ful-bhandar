@@ -96,8 +96,9 @@ export default function Bookings() {
           <span className="section-tag">Direct Scheduling</span>
           <h1 className="section-title">Book Floral Decoration</h1>
           <p className="section-description">
-            Reserve your wedding or event date with Kamlesh Ful Bhandar. Check availability and request a detailed quotation.
+            Reserve your wedding or event date with Kamlesh Flowers. Check availability and request a detailed quotation.
           </p>
+
         </div>
 
         <div style={{ background: '#ffffff', borderRadius: 'var(--radius-lg)', padding: '3.5rem', border: '1px solid var(--color-cream-border)', boxShadow: 'var(--shadow-lg)' }}>

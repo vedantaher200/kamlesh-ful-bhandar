@@ -13,6 +13,7 @@
     "build:backend": "npm --prefix backend run build",
     "build:frontend": "npm --prefix frontend run build",
     "build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "prisma": "npm --prefix backend run prisma:generate",
     "prisma:generate": "npm --prefix backend run prisma:generate",
     "postinstall": "npm --prefix backend run prisma:generate",
     "prisma:seed": "npm --prefix backend run prisma:seed",

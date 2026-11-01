@@ -36,7 +36,7 @@ export default function About() {
           <span className="section-tag">About Our Business</span>
           <h1 className="section-title">Celebrating Every Occasion With Flowers</h1>
           <p className="section-description">
-            Kamlesh Ful Bhandar provides flowers and floral decoration services for weddings, celebrations, events, and special occasions in Nashik.
+            Kamlesh Flowers provides flowers and floral decoration services for weddings, celebrations, events, and special occasions in Nashik.
           </p>
         </div>
 
@@ -44,7 +44,7 @@ export default function About() {
           <div style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '2px solid var(--color-cream-border)', boxShadow: 'var(--shadow-lg)' }}>
             <img
               src="https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=1000&q=80"
-              alt="Kamlesh Ful Bhandar Florals"
+              alt="Kamlesh Flowers Florals"
               style={{ width: '100%', height: '460px', objectFit: 'cover' }}
             />
           </div>
@@ -55,8 +55,9 @@ export default function About() {
             </h2>
 
             <p style={{ fontSize: '1.05rem', color: 'var(--color-text-muted)', lineHeight: 1.7, marginBottom: '1.25rem' }}>
-              Located near Ganpati Mandir in Pawan Nagar, <strong>Kamlesh Ful Bhandar</strong> serves families, couples, and event organizers across Nashik and nearby regions. We source fresh blooms every morning, ensuring that garlands retain their fragrance and wedding decor remains vibrant throughout your ceremonies.
+              Located near Ganpati Mandir in Pawan Nagar, <strong>Kamlesh Flowers</strong> serves families, couples, and event organizers across Nashik and nearby regions. We source fresh blooms every morning, ensuring that garlands retain their fragrance and wedding decor remains vibrant throughout your ceremonies.
             </p>
+
 
             <p style={{ fontSize: '1.05rem', color: 'var(--color-text-muted)', lineHeight: 1.7, marginBottom: '2rem' }}>
               We specialize in custom stage backdrops, traditional varmalas, car decoration, and hand bouquets with personalized customer attention.

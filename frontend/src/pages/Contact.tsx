@@ -18,11 +18,12 @@ export default function Contact() {
           {/* Info Card */}
           <div style={{ background: 'var(--color-primary-dark)', color: '#ffffff', padding: '3.5rem', borderRadius: 'var(--radius-lg)' }}>
             <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.5rem', marginBottom: '0.5rem' }}>
-              Kamlesh Ful Bhandar
+              Kamlesh Flowers
             </h2>
             <p style={{ color: 'var(--color-gold)', marginBottom: '2.5rem', letterSpacing: '0.05em' }}>
-              Flowers • Wedding & Event Decoration
+              NASHIK • FLOWER & DECOR
             </p>
+
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginBottom: '3rem' }}>
               <div style={{ display: 'flex', gap: '1.25rem' }}>

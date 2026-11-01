@@ -100,8 +100,9 @@ export default function Products() {
         {/* CATALOGUE HEADER */}
         <div className="section-header" style={{ marginBottom: '1.75rem', textAlign: 'center' }}>
           <span className="section-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-            <Sparkles size={14} /> Kamlesh Ful Bhandar • Real Product Catalogue
+            <Sparkles size={14} /> Kamlesh Flowers • Real Product Catalogue
           </span>
+
           <h1 className="section-title" style={{ fontSize: 'clamp(1.8rem, 4vw, 2.5rem)', margin: '0.4rem 0' }}>
             Flowers, Garlands & Car Decors
           </h1>
@@ -276,18 +277,30 @@ export default function Products() {
                       style={{ position: 'relative', display: 'block', height: '220px', background: '#f1f5f9', overflow: 'hidden' }}
                     >
                       {prod.image ? (
-                        <img
-                          src={prod.image}
-                          alt={prod.name}
-                          loading="lazy"
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
+                        <>
+                          <img
+                            src={prod.image}
+                            alt={prod.name}
+                            loading="lazy"
+                            onError={(e) => {
+                              (e.currentTarget.style.display = 'none');
+                              const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                              if (fallback) fallback.style.display = 'flex';
+                            }}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                          <div style={{ display: 'none', width: '100%', height: '100%', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+                            <ImageOff size={32} />
+                            <span style={{ fontSize: '0.75rem', marginTop: '0.35rem' }}>Photograph Updating Soon</span>
+                          </div>
+                        </>
                       ) : (
                         <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
                           <ImageOff size={32} />
-                          <span style={{ fontSize: '0.75rem', marginTop: '0.35rem' }}>Photo Upload Pending</span>
+                          <span style={{ fontSize: '0.75rem', marginTop: '0.35rem' }}>Photograph Updating Soon</span>
                         </div>
                       )}
+
 
                       {/* Category Badge */}
                       {prod.category && (

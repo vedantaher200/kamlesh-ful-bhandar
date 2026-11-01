@@ -39,8 +39,8 @@ export default function Services() {
           <div className="products-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '2rem' }}>
             {services.map((service) => (
               <div key={service.id} className="product-card">
-                <div className="product-image-wrap" style={{ height: '240px' }}>
-                  <img src={service.image} alt={service.title} />
+                <div className="product-image-wrap" style={{ height: '240px', background: '#f1f5f9' }}>
+                  <img src={service.image} alt={service.title} onError={(e) => { (e.currentTarget.style.display = 'none'); }} />
                   {service.highlight && (
                     <span className="product-badge-cat">{service.highlight}</span>
                   )}
@@ -52,12 +52,13 @@ export default function Services() {
 
                   <div className="product-actions" style={{ marginTop: 'auto' }}>
                     <a
-                      href={createWhatsAppUrl(`Hello Kamlesh Ful Bhandar, I would like to ask for a quotation for "${service.title}" in Nashik.`)}
+                      href={createWhatsAppUrl(`Hello Kamlesh Flowers, I would like to ask for a quotation for "${service.title}" in Nashik.`)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="btn btn-whatsapp btn-sm"
                       style={{ flex: 1 }}
                     >
+
                       <MessageCircle size={15} />
                       <span>WhatsApp Quote</span>
                     </a>

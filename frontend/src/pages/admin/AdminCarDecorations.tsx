@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { CarDecorationPost } from '../../types/index';
+import SafeCarImage from '../../components/SafeCarImage';
+
 
 export default function AdminCarDecorations() {
   const [posts, setPosts] = useState<CarDecorationPost[]>([]);
@@ -346,11 +348,13 @@ export default function AdminCarDecorations() {
             >
               {/* Image Preview with Status Badge */}
               <div style={{ position: 'relative', height: '190px', backgroundColor: '#f1f5f9' }}>
-                <img
+                <SafeCarImage
                   src={post.image}
                   alt={post.title}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  height="190px"
+                  showZoomBadge={false}
                 />
+
 
                 <span
                   style={{

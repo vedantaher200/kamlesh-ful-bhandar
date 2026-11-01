@@ -272,6 +272,9 @@ input, select, textarea {
   align-items: center;
   gap: 0.75rem;
   color: var(--color-text-white);
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .brand-icon {
@@ -290,40 +293,46 @@ input, select, textarea {
 .brand-title-wrap {
   display: flex;
   flex-direction: column;
+  justify-content: center;
 }
 
 .brand-title {
   font-family: var(--font-serif);
-  font-size: 1.45rem;
+  font-size: clamp(1.2rem, 1.8vw, 1.45rem);
   font-weight: 700;
   letter-spacing: 0.02em;
-  line-height: 1.1;
+  line-height: 1.15;
   color: #ffffff;
+  white-space: nowrap;
 }
 
 .brand-tagline {
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--color-gold);
-  font-weight: 500;
+  font-weight: 600;
+  white-space: nowrap;
+  margin-top: 2px;
 }
 
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 1.6rem;
+  gap: clamp(0.75rem, 1.4vw, 1.5rem);
   list-style: none;
 }
 
 .nav-link {
   color: rgba(255, 255, 255, 0.9);
-  font-size: 0.925rem;
+  font-size: clamp(0.85rem, 0.95vw, 0.925rem);
   font-weight: 500;
   position: relative;
   padding: 0.3rem 0;
+  white-space: nowrap;
   transition: color var(--transition-fast);
 }
+
 
 .nav-link::after {
   content: '';
@@ -431,10 +440,27 @@ input, select, textarea {
   color: var(--color-gold);
 }
 
+@media (min-width: 992px) and (max-width: 1180px) {
+  .nav-links {
+    gap: 0.65rem;
+  }
+  .nav-link {
+    font-size: 0.85rem;
+  }
+  .nav-actions {
+    gap: 0.4rem;
+  }
+  .nav-actions .btn-sm {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.8rem;
+  }
+}
+
 @media (max-width: 991px) {
   .nav-links, .nav-actions .btn-desktop {
     display: none;
   }
+
   .hamburger-btn {
     display: flex;
     align-items: center;

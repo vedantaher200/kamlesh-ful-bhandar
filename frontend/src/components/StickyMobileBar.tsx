@@ -16,8 +16,9 @@ export default function StickyMobileBar() {
       </a>
 
       <a
-        href={createWhatsAppUrl('Hello Kamlesh Ful Bhandar, I would like to enquire about fresh flowers and decoration in Nashik.')}
+        href={createWhatsAppUrl('Hello Kamlesh Flowers, I would like to enquire about fresh flowers and decoration in Nashik.')}
         target="_blank"
+
         rel="noopener noreferrer"
         className="mobile-action-btn mobile-action-whatsapp"
         aria-label="Order on WhatsApp"

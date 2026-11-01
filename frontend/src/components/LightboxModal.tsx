@@ -33,10 +33,16 @@ export default function LightboxModal({
   onIndexChange
 }: LightboxModalProps) {
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [imgError, setImgError] = useState(false);
   const currentItem = items[currentIndex];
 
   useEffect(() => {
+    setImgError(false);
+  }, [currentIndex]);
+
+  useEffect(() => {
     if (!isOpen) return;
+
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -194,16 +200,29 @@ export default function LightboxModal({
             overflow: 'hidden'
           }}
         >
-          <img
-            src={currentItem.image}
-            alt={currentItem.altText || currentItem.title}
-            style={{
-              maxWidth: '100%',
-              maxHeight: '62vh',
-              objectFit: 'contain',
-              userSelect: 'none'
-            }}
-          />
+          {imgError || !currentItem.image || currentItem.image.includes('photo-1549465220-1a8b9238cd48') || currentItem.image.includes('photo-1492691527719-9d1e07e534b4') || currentItem.image.includes('photo-1519225424987-4340d8aa8f61') ? (
+            <div style={{ textAlign: 'center', padding: '3rem 1.5rem', color: '#94a3b8' }}>
+              <p style={{ fontSize: '1.1rem', fontWeight: 600, color: '#f8fafc', margin: '0 0 0.5rem' }}>
+                Photograph Updating Soon
+              </p>
+              <p style={{ fontSize: '0.88rem', color: '#cbd5e1', margin: '0 0 1rem' }}>
+                Contact us on WhatsApp to view recent customer photographs of this design.
+              </p>
+            </div>
+          ) : (
+            <img
+              src={currentItem.image}
+              alt={currentItem.altText || currentItem.title}
+              onError={() => setImgError(true)}
+              style={{
+                maxWidth: '100%',
+                maxHeight: '62vh',
+                objectFit: 'contain',
+                userSelect: 'none'
+              }}
+            />
+          )}
+
 
           {/* Left Arrow */}
           <button

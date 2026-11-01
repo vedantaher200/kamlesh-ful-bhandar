@@ -35,15 +35,16 @@ export default function Navbar() {
     <>
       <header className={`navbar ${isHome ? (scrolled ? 'scrolled' : 'transparent') : 'solid'}`}>
         <div className="container nav-container">
-          <Link to="/" className="nav-brand" aria-label="Kamlesh Ful Bhandar Home">
+          <Link to="/" className="nav-brand" aria-label="Kamlesh Flowers Home">
             <div className="brand-icon">
               <Flower size={24} />
             </div>
             <div className="brand-title-wrap">
-              <span className="brand-title">Kamlesh Ful Bhandar</span>
-              <span className="brand-tagline">Nashik • Flower & Decor</span>
+              <span className="brand-title">Kamlesh Flowers</span>
+              <span className="brand-tagline">NASHIK • FLOWER & DECOR</span>
             </div>
           </Link>
+
 
           <nav aria-label="Main Navigation">
             <ul className="nav-links">
@@ -112,11 +113,15 @@ export default function Navbar() {
       <div className={`mobile-nav-drawer ${mobileMenuOpen ? 'open' : ''}`}>
         <div className="mobile-drawer-header">
           <div className="nav-brand">
-            <div className="brand-icon" style={{ width: 36, height: 36 }}>
+            <div className="brand-icon" style={{ width: 38, height: 38 }}>
               <Flower size={20} />
             </div>
-            <span className="brand-title" style={{ fontSize: '1.25rem' }}>Kamlesh Ful Bhandar</span>
+            <div className="brand-title-wrap">
+              <span className="brand-title" style={{ fontSize: '1.25rem' }}>Kamlesh Flowers</span>
+              <span className="brand-tagline" style={{ fontSize: '0.62rem' }}>NASHIK • FLOWER & DECOR</span>
+            </div>
           </div>
+
           <button
             className="mobile-drawer-close"
             onClick={() => setMobileMenuOpen(false)}

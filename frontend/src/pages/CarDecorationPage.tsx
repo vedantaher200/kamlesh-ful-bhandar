@@ -5,6 +5,7 @@ import { api, createWhatsAppUrl } from '../services/api';
 import { CarDecorationPost } from '../types/index';
 import LightboxModal, { LightboxImageItem } from '../components/LightboxModal';
 import CarDecorationEnquiryButton, { getCarDecorationPrice } from '../components/CarDecorationEnquiryButton';
+import SafeCarImage, { isUnrelatedOrBrokenCarImage } from '../components/SafeCarImage';
 
 export default function CarDecorationPage() {
   const [posts, setPosts] = useState<CarDecorationPost[]>([]);
@@ -178,44 +179,14 @@ export default function CarDecorationPage() {
                     transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                   }}
                 >
-                  {/* Original Image */}
-                  <div
-                    style={{
-                      position: 'relative',
-                      height: '240px',
-                      cursor: 'pointer',
-                      backgroundColor: '#f1f5f9',
-                      overflow: 'hidden'
-                    }}
-                    onClick={() => openLightbox(index)}
-                  >
-                    <img
-                      src={post.image}
-                      alt={post.title}
-                      loading="lazy"
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        transition: 'transform 0.3s ease'
-                      }}
-                    />
-                    <span
-                      style={{
-                        position: 'absolute',
-                        bottom: '12px',
-                        right: '12px',
-                        background: 'rgba(255, 255, 255, 0.92)',
-                        color: 'var(--color-primary-dark)',
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        padding: '0.2rem 0.6rem',
-                        borderRadius: '6px'
-                      }}
-                    >
-                      Tap to zoom
-                    </span>
-                  </div>
+                  {/* Safe Car Media */}
+                  <SafeCarImage
+                    src={post.image}
+                    alt={post.title}
+                    height="240px"
+                    onClick={!isUnrelatedOrBrokenCarImage(post.image) ? () => openLightbox(index) : undefined}
+                  />
+
 
                   {/* Content */}
                   <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
