@@ -8,10 +8,10 @@ pnpm-debug.log*
 
 # Environment & Secret files (NEVER commit real credentials)
 .env
-.env*.local
+.env*
 *.env
-backend/.env
-frontend/.env
+**/.env
+**/.env*
 !*.env.example
 
 # Production Build Output

@@ -91,8 +91,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       }
     }
 
-    console.log(`[AUTH] Admin login evaluation: KeyValid=${isKeyValid}, PasswordValid=${isPasswordValid}`);
-
     if (!isKeyValid || !isPasswordValid) {
       res.status(401).json({
         success: false,

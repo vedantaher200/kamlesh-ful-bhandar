@@ -55705,7 +55705,6 @@ var login = async (req, res) => {
         console.warn("\u26A0\uFE0F [AUTH] Database query during fallback credential evaluation failed:", dbErr);
       }
     }
-    console.log(`[AUTH] Admin login evaluation: KeyValid=${isKeyValid}, PasswordValid=${isPasswordValid}`);
     if (!isKeyValid || !isPasswordValid) {
       res.status(401).json({
         success: false,
