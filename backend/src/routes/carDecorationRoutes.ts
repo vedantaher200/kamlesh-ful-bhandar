@@ -5,6 +5,7 @@ import {
   getCarDecorationById,
   createCarDecoration,
   updateCarDecoration,
+  duplicateCarDecoration,
   toggleCarDecorationStatus,
   deleteCarDecoration
 } from '../controllers/carDecorationController.js';
@@ -23,6 +24,9 @@ router.get('/admin', authenticateAdmin, getAllCarDecorationsAdmin);
 
 router.post('/admin', authenticateAdmin, upload.single('image'), createCarDecoration);
 router.post('/', authenticateAdmin, upload.single('image'), createCarDecoration);
+
+router.post('/admin/:id/duplicate', authenticateAdmin, duplicateCarDecoration);
+router.post('/:id/duplicate', authenticateAdmin, duplicateCarDecoration);
 
 router.put('/admin/:id', authenticateAdmin, upload.single('image'), updateCarDecoration);
 router.put('/:id', authenticateAdmin, upload.single('image'), updateCarDecoration);

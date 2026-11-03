@@ -4721,13 +4721,13 @@ var require_extend_node = __commonJS({
           return length;
         };
         if (iconv.supportsStreams) {
-          var Readable2 = require("stream").Readable;
-          original.ReadableSetEncoding = Readable2.prototype.setEncoding;
-          Readable2.prototype.setEncoding = function setEncoding(enc, options) {
+          var Readable = require("stream").Readable;
+          original.ReadableSetEncoding = Readable.prototype.setEncoding;
+          Readable.prototype.setEncoding = function setEncoding(enc, options) {
             this._readableState.decoder = iconv.getDecoder(enc, options);
             this._readableState.encoding = enc;
           };
-          Readable2.prototype.collect = iconv._collect;
+          Readable.prototype.collect = iconv._collect;
         }
       };
       iconv.undoExtendNodeEncodings = function undoExtendNodeEncodings() {
@@ -4744,9 +4744,9 @@ var require_extend_node = __commonJS({
         Buffer2.prototype.toString = original.BufferToString;
         Buffer2.prototype.write = original.BufferWrite;
         if (iconv.supportsStreams) {
-          var Readable2 = require("stream").Readable;
-          Readable2.prototype.setEncoding = original.ReadableSetEncoding;
-          delete Readable2.prototype.collect;
+          var Readable = require("stream").Readable;
+          Readable.prototype.setEncoding = original.ReadableSetEncoding;
+          delete Readable.prototype.collect;
         }
         original = void 0;
       };
@@ -50459,7 +50459,7 @@ var require_sbmh = __commonJS({
 var require_multipart = __commonJS({
   "node_modules/busboy/lib/types/multipart.js"(exports2, module2) {
     "use strict";
-    var { Readable: Readable2, Writable } = require("stream");
+    var { Readable, Writable } = require("stream");
     var StreamSearch = require_sbmh();
     var {
       basename,
@@ -50615,7 +50615,7 @@ var require_multipart = __commonJS({
         return pos;
       }
     };
-    var FileStream = class extends Readable2 {
+    var FileStream = class extends Readable {
       constructor(opts, owner) {
         super(opts);
         this.truncated = false;
@@ -53502,9 +53502,9 @@ var require_stream_duplex = __commonJS({
     module2.exports = Duplex;
     var util = Object.create(require_util());
     util.inherits = require_inherits();
-    var Readable2 = require_stream_readable();
+    var Readable = require_stream_readable();
     var Writable = require_stream_writable();
-    util.inherits(Duplex, Readable2);
+    util.inherits(Duplex, Readable);
     {
       keys = objectKeys(Writable.prototype);
       for (v = 0; v < keys.length; v++) {
@@ -53517,7 +53517,7 @@ var require_stream_duplex = __commonJS({
     var v;
     function Duplex(options) {
       if (!(this instanceof Duplex)) return new Duplex(options);
-      Readable2.call(this, options);
+      Readable.call(this, options);
       Writable.call(this, options);
       if (options && options.readable === false) this.readable = false;
       if (options && options.writable === false) this.writable = false;
@@ -53864,10 +53864,10 @@ var require_stream_readable = __commonJS({
   "node_modules/readable-stream/lib/_stream_readable.js"(exports2, module2) {
     "use strict";
     var pna = require_process_nextick_args();
-    module2.exports = Readable2;
+    module2.exports = Readable;
     var isArray = require_isarray();
     var Duplex;
-    Readable2.ReadableState = ReadableState;
+    Readable.ReadableState = ReadableState;
     var EE = require("events").EventEmitter;
     var EElistenerCount = function(emitter, type) {
       return emitter.listeners(type).length;
@@ -53895,7 +53895,7 @@ var require_stream_readable = __commonJS({
     var BufferList = require_BufferList();
     var destroyImpl = require_destroy2();
     var StringDecoder;
-    util.inherits(Readable2, Stream);
+    util.inherits(Readable, Stream);
     var kProxyEvents = ["error", "close", "destroy", "pause", "resume"];
     function prependListener(emitter, event, fn2) {
       if (typeof emitter.prependListener === "function") return emitter.prependListener(event, fn2);
@@ -53941,9 +53941,9 @@ var require_stream_readable = __commonJS({
         this.encoding = options.encoding;
       }
     }
-    function Readable2(options) {
+    function Readable(options) {
       Duplex = Duplex || require_stream_duplex();
-      if (!(this instanceof Readable2)) return new Readable2(options);
+      if (!(this instanceof Readable)) return new Readable(options);
       this._readableState = new ReadableState(options, this);
       this.readable = true;
       if (options) {
@@ -53952,7 +53952,7 @@ var require_stream_readable = __commonJS({
       }
       Stream.call(this);
     }
-    Object.defineProperty(Readable2.prototype, "destroyed", {
+    Object.defineProperty(Readable.prototype, "destroyed", {
       get: function() {
         if (this._readableState === void 0) {
           return false;
@@ -53966,13 +53966,13 @@ var require_stream_readable = __commonJS({
         this._readableState.destroyed = value;
       }
     });
-    Readable2.prototype.destroy = destroyImpl.destroy;
-    Readable2.prototype._undestroy = destroyImpl.undestroy;
-    Readable2.prototype._destroy = function(err, cb) {
+    Readable.prototype.destroy = destroyImpl.destroy;
+    Readable.prototype._undestroy = destroyImpl.undestroy;
+    Readable.prototype._destroy = function(err, cb) {
       this.push(null);
       cb(err);
     };
-    Readable2.prototype.push = function(chunk, encoding) {
+    Readable.prototype.push = function(chunk, encoding) {
       var state = this._readableState;
       var skipChunkCheck;
       if (!state.objectMode) {
@@ -53989,7 +53989,7 @@ var require_stream_readable = __commonJS({
       }
       return readableAddChunk(this, chunk, encoding, false, skipChunkCheck);
     };
-    Readable2.prototype.unshift = function(chunk) {
+    Readable.prototype.unshift = function(chunk) {
       return readableAddChunk(this, chunk, null, true, false);
     };
     function readableAddChunk(stream, chunk, encoding, addToFront, skipChunkCheck) {
@@ -54049,10 +54049,10 @@ var require_stream_readable = __commonJS({
     function needMoreData(state) {
       return !state.ended && (state.needReadable || state.length < state.highWaterMark || state.length === 0);
     }
-    Readable2.prototype.isPaused = function() {
+    Readable.prototype.isPaused = function() {
       return this._readableState.flowing === false;
     };
-    Readable2.prototype.setEncoding = function(enc) {
+    Readable.prototype.setEncoding = function(enc) {
       if (!StringDecoder) StringDecoder = require_string_decoder().StringDecoder;
       this._readableState.decoder = new StringDecoder(enc);
       this._readableState.encoding = enc;
@@ -54088,7 +54088,7 @@ var require_stream_readable = __commonJS({
       }
       return state.length;
     }
-    Readable2.prototype.read = function(n) {
+    Readable.prototype.read = function(n) {
       debug("read", n);
       n = parseInt(n, 10);
       var state = this._readableState;
@@ -54183,10 +54183,10 @@ var require_stream_readable = __commonJS({
       }
       state.readingMore = false;
     }
-    Readable2.prototype._read = function(n) {
+    Readable.prototype._read = function(n) {
       this.emit("error", new Error("_read() is not implemented"));
     };
-    Readable2.prototype.pipe = function(dest, pipeOpts) {
+    Readable.prototype.pipe = function(dest, pipeOpts) {
       var src = this;
       var state = this._readableState;
       switch (state.pipesCount) {
@@ -54291,7 +54291,7 @@ var require_stream_readable = __commonJS({
         }
       };
     }
-    Readable2.prototype.unpipe = function(dest) {
+    Readable.prototype.unpipe = function(dest) {
       var state = this._readableState;
       var unpipeInfo = { hasUnpiped: false };
       if (state.pipesCount === 0) return this;
@@ -54323,7 +54323,7 @@ var require_stream_readable = __commonJS({
       dest.emit("unpipe", this, unpipeInfo);
       return this;
     };
-    Readable2.prototype.on = function(ev, fn2) {
+    Readable.prototype.on = function(ev, fn2) {
       var res = Stream.prototype.on.call(this, ev, fn2);
       if (ev === "data") {
         if (this._readableState.flowing !== false) this.resume();
@@ -54341,12 +54341,12 @@ var require_stream_readable = __commonJS({
       }
       return res;
     };
-    Readable2.prototype.addListener = Readable2.prototype.on;
+    Readable.prototype.addListener = Readable.prototype.on;
     function nReadingNextTick(self2) {
       debug("readable nexttick read 0");
       self2.read(0);
     }
-    Readable2.prototype.resume = function() {
+    Readable.prototype.resume = function() {
       var state = this._readableState;
       if (!state.flowing) {
         debug("resume");
@@ -54372,7 +54372,7 @@ var require_stream_readable = __commonJS({
       flow(stream);
       if (state.flowing && !state.reading) stream.read(0);
     }
-    Readable2.prototype.pause = function() {
+    Readable.prototype.pause = function() {
       debug("call pause flowing=%j", this._readableState.flowing);
       if (false !== this._readableState.flowing) {
         debug("pause");
@@ -54387,7 +54387,7 @@ var require_stream_readable = __commonJS({
       while (state.flowing && stream.read() !== null) {
       }
     }
-    Readable2.prototype.wrap = function(stream) {
+    Readable.prototype.wrap = function(stream) {
       var _this = this;
       var state = this._readableState;
       var paused = false;
@@ -54431,7 +54431,7 @@ var require_stream_readable = __commonJS({
       };
       return this;
     };
-    Object.defineProperty(Readable2.prototype, "readableHighWaterMark", {
+    Object.defineProperty(Readable.prototype, "readableHighWaterMark", {
       // making it explicit this property is not enumerable
       // because otherwise some prototype manipulation in
       // userland will fail
@@ -54440,7 +54440,7 @@ var require_stream_readable = __commonJS({
         return this._readableState.highWaterMark;
       }
     });
-    Readable2._fromList = fromList;
+    Readable._fromList = fromList;
     function fromList(n, state) {
       if (state.length === 0) return null;
       var ret;
@@ -57149,25 +57149,56 @@ var import_express11 = __toESM(require_express2());
 var import_cloudinary = __toESM(require_cloudinary2());
 var import_dotenv = __toESM(require_main());
 import_dotenv.default.config();
-var isCloudinaryConfigured = Boolean(
-  process.env.CLOUDINARY_URL || process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET
-);
-if (isCloudinaryConfigured) {
-  if (process.env.CLOUDINARY_URL) {
-  } else {
+var initCloudinary = () => {
+  const cloud_name = (process.env.CLOUDINARY_CLOUD_NAME || "").trim().replace(/^["']|["']$/g, "");
+  const api_key = (process.env.CLOUDINARY_API_KEY || "").trim().replace(/^["']|["']$/g, "");
+  const api_secret = (process.env.CLOUDINARY_API_SECRET || "").trim().replace(/^["']|["']$/g, "");
+  const cloudinary_url = (process.env.CLOUDINARY_URL || "").trim().replace(/^["']|["']$/g, "");
+  if (cloudinary_url) {
     import_cloudinary.v2.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET
+      cloudinary_url,
+      secure: true
     });
   }
-  console.log("\u2713 Cloudinary configured successfully.");
-} else {
-  console.warn("Cloudinary is not configured; direct file uploads require CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET or CLOUDINARY_URL.");
-}
+  if (cloud_name && api_key && api_secret) {
+    import_cloudinary.v2.config({
+      cloud_name,
+      api_key,
+      api_secret,
+      secure: true
+    });
+  }
+};
+initCloudinary();
+var isCloudinaryConfigured = () => {
+  initCloudinary();
+  const cfg = import_cloudinary.v2.config();
+  return Boolean(cfg.cloud_name && cfg.api_key && cfg.api_secret);
+};
+var getCloudinaryDiagnostics = () => {
+  initCloudinary();
+  const cfg = import_cloudinary.v2.config();
+  const rawCloud = (process.env.CLOUDINARY_CLOUD_NAME || "").trim();
+  const rawKey = (process.env.CLOUDINARY_API_KEY || "").trim();
+  const rawSecret = (process.env.CLOUDINARY_API_SECRET || "").trim();
+  const rawUrl = (process.env.CLOUDINARY_URL || "").trim();
+  return {
+    isConfigured: Boolean(cfg.cloud_name && cfg.api_key && cfg.api_secret),
+    activeCloudName: cfg.cloud_name || null,
+    hasCloudName: Boolean(rawCloud),
+    cloudNameMasked: rawCloud ? `${rawCloud.slice(0, 3)}***${rawCloud.slice(-2)}` : null,
+    hasApiKey: Boolean(rawKey),
+    apiKeyLength: rawKey.length,
+    apiKeyMasked: rawKey ? `${rawKey.slice(0, 3)}***` : null,
+    hasApiSecret: Boolean(rawSecret),
+    apiSecretLength: rawSecret.length,
+    hasCloudinaryUrl: Boolean(rawUrl)
+  };
+};
 var deleteFromCloudinary = async (publicId) => {
-  if (!isCloudinaryConfigured || !publicId) return false;
+  if (!isCloudinaryConfigured() || !publicId) return false;
   try {
+    initCloudinary();
     const res = await import_cloudinary.v2.uploader.destroy(publicId);
     return res.result === "ok";
   } catch (err) {
@@ -57177,24 +57208,54 @@ var deleteFromCloudinary = async (publicId) => {
 };
 
 // src/controllers/uploadController.ts
-var import_stream = require("stream");
-var uploadToCloudinary = (buffer, mimetype) => new Promise((resolve, reject) => {
-  const stream = import_cloudinary.v2.uploader.upload_stream({
-    folder: "kamlesh-ful-bhandar",
-    resource_type: "image",
-    format: mimetype === "image/png" ? "png" : mimetype === "image/webp" ? "webp" : "jpg",
-    transformation: [{ quality: "auto", fetch_format: "auto" }]
-  }, (error, result) => error ? reject(error) : resolve(result));
-  import_stream.Readable.from(buffer).pipe(stream);
-});
+var uploadToCloudinary = (buffer, mimetype) => {
+  return new Promise((resolve, reject) => {
+    initCloudinary();
+    if (!isCloudinaryConfigured()) {
+      return reject(
+        new Error(
+          "Cloudinary is not configured. Please ensure CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET are set in environment variables."
+        )
+      );
+    }
+    const mime = mimetype || "image/jpeg";
+    const base64Data = `data:${mime};base64,${buffer.toString("base64")}`;
+    import_cloudinary.v2.uploader.upload(
+      base64Data,
+      {
+        folder: "kamlesh-ful-bhandar",
+        resource_type: "image",
+        transformation: [{ quality: "auto", fetch_format: "auto" }],
+        timeout: 25e3
+      },
+      (error, result) => {
+        if (error) {
+          console.error("[Cloudinary Upload Error]:", error);
+          reject(error);
+        } else if (!result || !result.secure_url) {
+          reject(new Error("Cloudinary returned an empty response."));
+        } else {
+          resolve({
+            secure_url: result.secure_url,
+            public_id: result.public_id,
+            format: result.format
+          });
+        }
+      }
+    );
+  });
+};
 var handleImageUpload = async (req, res) => {
   try {
     if (!req.file) {
-      res.status(400).json({ success: false, message: "No file uploaded." });
+      res.status(400).json({ success: false, message: "No image file was received in the request." });
       return;
     }
-    if (!isCloudinaryConfigured) {
-      res.status(503).json({ success: false, message: "Image storage is not configured. Set the Cloudinary environment variables before uploading." });
+    if (!isCloudinaryConfigured()) {
+      res.status(503).json({
+        success: false,
+        message: "Image storage is not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in Vercel environment variables before uploading."
+      });
       return;
     }
     const result = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
@@ -57207,7 +57268,12 @@ var handleImageUpload = async (req, res) => {
     });
   } catch (error) {
     console.error("Upload handling error:", error);
-    res.status(502).json({ success: false, message: "Image upload failed. Please retry; no product was saved." });
+    const errorMsg = error?.message || (typeof error === "string" ? error : "Image upload failed");
+    res.status(502).json({
+      success: false,
+      message: `Image upload failed: ${errorMsg}. Please verify your Cloudinary configuration.`,
+      error: errorMsg
+    });
   }
 };
 
@@ -57473,14 +57539,21 @@ var createCarDecoration = async (req, res) => {
     if (!title || !title.trim()) {
       return res.status(400).json({ success: false, message: "Title is required" });
     }
-    let imageUrl = req.body.image;
-    let imagePublicId = req.body.imagePublicId;
+    let imageUrl = typeof req.body.image === "string" ? req.body.image.trim() : "";
+    let imagePublicId = req.body.imagePublicId || null;
     if (req.file) {
-      imageUrl = req.file.path || `/uploads/${req.file.filename}`;
-      imagePublicId = req.file.filename;
-    }
-    if (!imageUrl) {
-      return res.status(400).json({ success: false, message: "Image is required for car decoration post" });
+      if (isCloudinaryConfigured()) {
+        try {
+          const uploadResult = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
+          imageUrl = uploadResult.secure_url;
+          imagePublicId = uploadResult.public_id;
+        } catch (uploadErr) {
+          return res.status(502).json({
+            success: false,
+            message: `Image upload failed: ${uploadErr.message || "Storage error"}`
+          });
+        }
+      }
     }
     const parsedPrice = price !== void 0 && price !== "" && !isNaN(Number(price)) ? Number(price) : null;
     const postStatus = status === "UNPUBLISHED" ? "UNPUBLISHED" : "PUBLISHED";
@@ -57518,8 +57591,18 @@ var updateCarDecoration = async (req, res) => {
     let imageUrl = existing.image;
     let imagePublicId = existing.imagePublicId;
     if (req.file) {
-      imageUrl = req.file.path || `/uploads/${req.file.filename}`;
-      imagePublicId = req.file.filename;
+      if (isCloudinaryConfigured()) {
+        try {
+          const uploadResult = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
+          imageUrl = uploadResult.secure_url;
+          imagePublicId = uploadResult.public_id;
+        } catch (uploadErr) {
+          return res.status(502).json({
+            success: false,
+            message: `Image upload failed: ${uploadErr.message || "Storage error"}`
+          });
+        }
+      }
     } else if (req.body.image !== void 0) {
       imageUrl = typeof req.body.image === "string" ? req.body.image.trim() : "";
       if (req.body.imagePublicId !== void 0) {
@@ -57562,6 +57645,36 @@ var updateCarDecoration = async (req, res) => {
   } catch (error) {
     console.error("Error updating car decoration:", error);
     res.status(500).json({ success: false, message: error.message || "Failed to update car decoration" });
+  }
+};
+var duplicateCarDecoration = async (req, res) => {
+  try {
+    const { id: id2 } = req.params;
+    const original = await prisma.carDecorationPost.findUnique({
+      where: { id: id2 }
+    });
+    if (!original) {
+      return res.status(404).json({ success: false, message: "Original car decoration post not found" });
+    }
+    const duplicatedPost = await prisma.carDecorationPost.create({
+      data: {
+        title: `${original.title} (Copy)`.trim(),
+        description: original.description,
+        price: original.price,
+        priceText: original.priceText,
+        image: original.image,
+        imagePublicId: original.imagePublicId,
+        status: original.status
+      }
+    });
+    res.status(201).json({
+      success: true,
+      message: "Post duplicated successfully as a new record",
+      post: duplicatedPost
+    });
+  } catch (error) {
+    console.error("Error duplicating car decoration:", error);
+    res.status(500).json({ success: false, message: error.message || "Failed to duplicate car decoration" });
   }
 };
 var toggleCarDecorationStatus = async (req, res) => {
@@ -57630,6 +57743,8 @@ router13.get("/admin/all", authenticateAdmin, getAllCarDecorationsAdmin);
 router13.get("/admin", authenticateAdmin, getAllCarDecorationsAdmin);
 router13.post("/admin", authenticateAdmin, upload.single("image"), createCarDecoration);
 router13.post("/", authenticateAdmin, upload.single("image"), createCarDecoration);
+router13.post("/admin/:id/duplicate", authenticateAdmin, duplicateCarDecoration);
+router13.post("/:id/duplicate", authenticateAdmin, duplicateCarDecoration);
 router13.put("/admin/:id", authenticateAdmin, upload.single("image"), updateCarDecoration);
 router13.put("/:id", authenticateAdmin, upload.single("image"), updateCarDecoration);
 router13.patch("/admin/:id/status", authenticateAdmin, toggleCarDecorationStatus);
@@ -57752,6 +57867,7 @@ var handleDiag = async (_req, res) => {
   }
   const cwdEngines = findEngines(process.cwd());
   const taskEngines = process.platform === "linux" ? findEngines("/var/task") : [];
+  const cloudinaryDiag = getCloudinaryDiagnostics();
   res.json({
     status: "ok",
     timestamp: (/* @__PURE__ */ new Date()).toISOString(),
@@ -57763,6 +57879,7 @@ var handleDiag = async (_req, res) => {
       isServerlessRuntime,
       vercel: Boolean(process.env.VERCEL)
     },
+    cloudinary: cloudinaryDiag,
     engineFiles: {
       inCwd: cwdEngines,
       inVarTask: taskEngines
@@ -57776,6 +57893,24 @@ var handleDiag = async (_req, res) => {
 };
 app.get("/api/diag", handleDiag);
 app.get("/diag", handleDiag);
+app.get("/api/upload/test", async (_req, res) => {
+  const diag = getCloudinaryDiagnostics();
+  let pingResult = null;
+  let testError = null;
+  if (diag.isConfigured) {
+    try {
+      pingResult = await import_cloudinary.v2.api.ping();
+    } catch (e) {
+      testError = e?.message || String(e);
+    }
+  }
+  res.json({
+    status: "ok",
+    cloudinary: diag,
+    ping: pingResult,
+    error: testError
+  });
+});
 var handleHealth = async (_req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;

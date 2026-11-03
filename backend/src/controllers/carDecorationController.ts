@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../config/prisma.js';
-import { deleteFromCloudinary } from '../config/cloudinary.js';
+import { deleteFromCloudinary, isCloudinaryConfigured } from '../config/cloudinary.js';
+import { uploadToCloudinary } from './uploadController.js';
 
 // 1. Public: Get only PUBLISHED Car Decoration posts
 export const getPublishedCarDecorations = async (_req: Request, res: Response) => {
@@ -82,16 +83,23 @@ export const createCarDecoration = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: 'Title is required' });
     }
 
-    let imageUrl = req.body.image;
-    let imagePublicId = req.body.imagePublicId;
+    let imageUrl = typeof req.body.image === 'string' ? req.body.image.trim() : '';
+    let imagePublicId = req.body.imagePublicId || null;
 
+    // Handle direct file upload if submitted via multipart/form-data
     if (req.file) {
-      imageUrl = (req.file as any).path || `/uploads/${req.file.filename}`;
-      imagePublicId = (req.file as any).filename;
-    }
-
-    if (!imageUrl) {
-      return res.status(400).json({ success: false, message: 'Image is required for car decoration post' });
+      if (isCloudinaryConfigured()) {
+        try {
+          const uploadResult = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
+          imageUrl = uploadResult.secure_url;
+          imagePublicId = uploadResult.public_id;
+        } catch (uploadErr: any) {
+          return res.status(502).json({
+            success: false,
+            message: `Image upload failed: ${uploadErr.message || 'Storage error'}`
+          });
+        }
+      }
     }
 
     const parsedPrice = price !== undefined && price !== '' && !isNaN(Number(price)) ? Number(price) : null;
@@ -120,7 +128,7 @@ export const createCarDecoration = async (req: Request, res: Response) => {
   }
 };
 
-// 5. Admin: Update existing Car Decoration post (CRITICAL: SAME RECORD ID, NO DUPLICATE)
+// 5. Admin: Update existing Car Decoration post (GUARANTEES SAME RECORD ID, NEVER DUPLICATES)
 export const updateCarDecoration = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -137,9 +145,20 @@ export const updateCarDecoration = async (req: Request, res: Response) => {
     let imageUrl = existing.image;
     let imagePublicId = existing.imagePublicId;
 
+    // Handle direct file upload if submitted via multipart/form-data
     if (req.file) {
-      imageUrl = (req.file as any).path || `/uploads/${req.file.filename}`;
-      imagePublicId = (req.file as any).filename;
+      if (isCloudinaryConfigured()) {
+        try {
+          const uploadResult = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
+          imageUrl = uploadResult.secure_url;
+          imagePublicId = uploadResult.public_id;
+        } catch (uploadErr: any) {
+          return res.status(502).json({
+            success: false,
+            message: `Image upload failed: ${uploadErr.message || 'Storage error'}`
+          });
+        }
+      }
     } else if (req.body.image !== undefined) {
       // Allow updating image or explicitly clearing it (empty string)
       imageUrl = typeof req.body.image === 'string' ? req.body.image.trim() : '';
@@ -150,9 +169,12 @@ export const updateCarDecoration = async (req: Request, res: Response) => {
       }
     }
 
-    const parsedPrice = price !== undefined && price !== '' && !isNaN(Number(price))
-      ? Number(price)
-      : (price === null ? null : existing.price);
+    const parsedPrice =
+      price !== undefined && price !== '' && !isNaN(Number(price))
+        ? Number(price)
+        : price === null
+        ? null
+        : existing.price;
 
     const postStatus = status ? (status === 'UNPUBLISHED' ? 'UNPUBLISHED' : 'PUBLISHED') : existing.status;
 
@@ -163,7 +185,12 @@ export const updateCarDecoration = async (req: Request, res: Response) => {
         title: title !== undefined ? title.trim() : existing.title,
         description: description !== undefined ? (description ? description.trim() : null) : existing.description,
         price: parsedPrice,
-        priceText: priceText !== undefined ? priceText : (parsedPrice ? `₹${parsedPrice.toLocaleString('en-IN')}` : 'Price on Request'),
+        priceText:
+          priceText !== undefined
+            ? priceText
+            : parsedPrice
+            ? `₹${parsedPrice.toLocaleString('en-IN')}`
+            : 'Price on Request',
         image: imageUrl,
         imagePublicId,
         status: postStatus
@@ -195,7 +222,43 @@ export const updateCarDecoration = async (req: Request, res: Response) => {
   }
 };
 
-// 6. Admin: Toggle publish status
+// 6. Admin: Duplicate an existing post into a distinct new database record
+export const duplicateCarDecoration = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const original = await prisma.carDecorationPost.findUnique({
+      where: { id }
+    });
+
+    if (!original) {
+      return res.status(404).json({ success: false, message: 'Original car decoration post not found' });
+    }
+
+    // Create a brand new record with explicit "(Copy)" suffix in title
+    const duplicatedPost = await prisma.carDecorationPost.create({
+      data: {
+        title: `${original.title} (Copy)`.trim(),
+        description: original.description,
+        price: original.price,
+        priceText: original.priceText,
+        image: original.image,
+        imagePublicId: original.imagePublicId,
+        status: original.status
+      }
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Post duplicated successfully as a new record',
+      post: duplicatedPost
+    });
+  } catch (error: any) {
+    console.error('Error duplicating car decoration:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to duplicate car decoration' });
+  }
+};
+
+// 7. Admin: Toggle publish status
 export const toggleCarDecorationStatus = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -225,7 +288,7 @@ export const toggleCarDecorationStatus = async (req: Request, res: Response) => 
   }
 };
 
-// 7. Admin: Delete Car Decoration post
+// 8. Admin: Delete Car Decoration post
 export const deleteCarDecoration = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;

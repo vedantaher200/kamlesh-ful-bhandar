@@ -3,31 +3,77 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const isCloudinaryConfigured = Boolean(
-  process.env.CLOUDINARY_URL ||
-  (process.env.CLOUDINARY_CLOUD_NAME &&
-   process.env.CLOUDINARY_API_KEY &&
-   process.env.CLOUDINARY_API_SECRET)
-);
+/**
+ * Initializes Cloudinary configuration with trimmed environment variables,
+ * stripping accidental outer quotes or whitespace.
+ */
+export const initCloudinary = () => {
+  const cloud_name = (process.env.CLOUDINARY_CLOUD_NAME || '').trim().replace(/^["']|["']$/g, '');
+  const api_key = (process.env.CLOUDINARY_API_KEY || '').trim().replace(/^["']|["']$/g, '');
+  const api_secret = (process.env.CLOUDINARY_API_SECRET || '').trim().replace(/^["']|["']$/g, '');
+  const cloudinary_url = (process.env.CLOUDINARY_URL || '').trim().replace(/^["']|["']$/g, '');
 
-if (isCloudinaryConfigured) {
-  if (process.env.CLOUDINARY_URL) {
-    // Automatically configured via CLOUDINARY_URL
-  } else {
+  if (cloudinary_url) {
     cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET
+      cloudinary_url,
+      secure: true
     });
   }
-  console.log('✓ Cloudinary configured successfully.');
-} else {
-  console.warn('Cloudinary is not configured; direct file uploads require CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET or CLOUDINARY_URL.');
-}
 
+  if (cloud_name && api_key && api_secret) {
+    cloudinary.config({
+      cloud_name,
+      api_key,
+      api_secret,
+      secure: true
+    });
+  }
+};
+
+// Initial setup on module load
+initCloudinary();
+
+/**
+ * Checks if Cloudinary is configured with valid credentials.
+ */
+export const isCloudinaryConfigured = (): boolean => {
+  initCloudinary();
+  const cfg = cloudinary.config();
+  return Boolean(cfg.cloud_name && cfg.api_key && cfg.api_secret);
+};
+
+/**
+ * Safe diagnostic status of Cloudinary configuration without leaking secrets.
+ */
+export const getCloudinaryDiagnostics = () => {
+  initCloudinary();
+  const cfg = cloudinary.config();
+  const rawCloud = (process.env.CLOUDINARY_CLOUD_NAME || '').trim();
+  const rawKey = (process.env.CLOUDINARY_API_KEY || '').trim();
+  const rawSecret = (process.env.CLOUDINARY_API_SECRET || '').trim();
+  const rawUrl = (process.env.CLOUDINARY_URL || '').trim();
+
+  return {
+    isConfigured: Boolean(cfg.cloud_name && cfg.api_key && cfg.api_secret),
+    activeCloudName: cfg.cloud_name || null,
+    hasCloudName: Boolean(rawCloud),
+    cloudNameMasked: rawCloud ? `${rawCloud.slice(0, 3)}***${rawCloud.slice(-2)}` : null,
+    hasApiKey: Boolean(rawKey),
+    apiKeyLength: rawKey.length,
+    apiKeyMasked: rawKey ? `${rawKey.slice(0, 3)}***` : null,
+    hasApiSecret: Boolean(rawSecret),
+    apiSecretLength: rawSecret.length,
+    hasCloudinaryUrl: Boolean(rawUrl)
+  };
+};
+
+/**
+ * Safely deletes an asset from Cloudinary by its public ID.
+ */
 export const deleteFromCloudinary = async (publicId: string): Promise<boolean> => {
-  if (!isCloudinaryConfigured || !publicId) return false;
+  if (!isCloudinaryConfigured() || !publicId) return false;
   try {
+    initCloudinary();
     const res = await cloudinary.uploader.destroy(publicId);
     return res.result === 'ok';
   } catch (err) {
@@ -36,4 +82,4 @@ export const deleteFromCloudinary = async (publicId: string): Promise<boolean> =
   }
 };
 
-export { cloudinary, isCloudinaryConfigured };
+export { cloudinary };

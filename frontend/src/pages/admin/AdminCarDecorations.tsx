@@ -13,11 +13,69 @@ import {
   ExternalLink,
   RotateCcw,
   Image as ImageIcon,
-  AlertTriangle
+  AlertTriangle,
+  Copy
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { CarDecorationPost } from '../../types/index';
 import SafeCarImage from '../../components/SafeCarImage';
+
+/**
+ * Optimizes an image file in the browser before upload.
+ * Large smartphone photos (5-15MB) are resized to max 1600px width/height and compressed to JPEG ~300KB.
+ * This guarantees uploads never hit Vercel's 4.5MB payload limit or trigger 503 timeouts.
+ */
+async function optimizeImageForUpload(file: File, maxWidth = 1600, quality = 0.85): Promise<File> {
+  if (file.size <= 800 * 1024) return file;
+
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth || height > maxWidth) {
+          if (width > height) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxWidth) / height);
+            height = maxWidth;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (blob && blob.size < file.size) {
+              const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+                type: 'image/jpeg',
+                lastModified: Date.now()
+              });
+              resolve(optimizedFile);
+            } else {
+              resolve(file);
+            }
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      img.onerror = () => resolve(file);
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+}
 
 
 export default function AdminCarDecorations() {
@@ -98,12 +156,37 @@ export default function AdminCarDecorations() {
     setIsModalOpen(true);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-      setImageAction('REPLACE');
+      const rawFile = e.target.files[0];
+      try {
+        const optimized = await optimizeImageForUpload(rawFile);
+        setImageFile(optimized);
+        setImagePreview(URL.createObjectURL(optimized));
+        setImageAction('REPLACE');
+      } catch {
+        setImageFile(rawFile);
+        setImagePreview(URL.createObjectURL(rawFile));
+        setImageAction('REPLACE');
+      }
+    }
+  };
+
+  const handleDuplicatePost = async (post: CarDecorationPost) => {
+    try {
+      setLoading(true);
+      const res = await api.duplicateCarDecoration(post.id);
+      if (res.success) {
+        showNotice('success', `Post duplicated successfully! New record created: "${res.post.title}"`);
+        await fetchPosts();
+      } else {
+        throw new Error(res.message || 'Failed to duplicate post');
+      }
+    } catch (err: any) {
+      console.error('Error duplicating post:', err);
+      showNotice('error', err.message || 'Failed to duplicate post');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -178,12 +261,6 @@ export default function AdminCarDecorations() {
         }
       } else {
         // --- 2. CREATE BRAND NEW POST ---
-        if (!imageFile && !imageUrl.trim()) {
-          showNotice('error', 'Please upload an image or provide an image URL for the new post.');
-          setSaving(false);
-          return;
-        }
-
         if (imageFile) {
           try {
             const uploadRes = await api.uploadImage(imageFile);
@@ -535,6 +612,22 @@ export default function AdminCarDecorations() {
                       title="Edit this post (same ID)"
                     >
                       <Edit2 size={15} color="#0284c7" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDuplicatePost(post)}
+                      className="btn-icon"
+                      style={{
+                        padding: '0.4rem 0.6rem',
+                        borderRadius: '6px',
+                        border: '1px solid #fed7aa',
+                        background: '#fff7ed',
+                        cursor: 'pointer'
+                      }}
+                      title="Duplicate post (creates separate record)"
+                    >
+                      <Copy size={15} color="#ea580c" />
                     </button>
 
                     <button

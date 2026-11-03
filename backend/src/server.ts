@@ -7,6 +7,7 @@ import os from 'os';
 import { fileURLToPath } from 'url';
 import apiRouter from './routes/index.js';
 import { prisma } from './config/prisma.js';
+import { getCloudinaryDiagnostics, isCloudinaryConfigured, cloudinary } from './config/cloudinary.js';
 
 const getFileAndDir = () => {
   if (typeof __filename !== 'undefined' && typeof __dirname !== 'undefined') {
@@ -122,6 +123,7 @@ const handleDiag = async (_req: express.Request, res: express.Response) => {
 
   const cwdEngines = findEngines(process.cwd());
   const taskEngines = process.platform === 'linux' ? findEngines('/var/task') : [];
+  const cloudinaryDiag = getCloudinaryDiagnostics();
 
   res.json({
     status: 'ok',
@@ -134,6 +136,7 @@ const handleDiag = async (_req: express.Request, res: express.Response) => {
       isServerlessRuntime,
       vercel: Boolean(process.env.VERCEL)
     },
+    cloudinary: cloudinaryDiag,
     engineFiles: {
       inCwd: cwdEngines,
       inVarTask: taskEngines
@@ -148,6 +151,26 @@ const handleDiag = async (_req: express.Request, res: express.Response) => {
 
 app.get('/api/diag', handleDiag);
 app.get('/diag', handleDiag);
+
+// Cloudinary live test ping endpoint
+app.get('/api/upload/test', async (_req, res) => {
+  const diag = getCloudinaryDiagnostics();
+  let pingResult: any = null;
+  let testError: string | null = null;
+  if (diag.isConfigured) {
+    try {
+      pingResult = await cloudinary.api.ping();
+    } catch (e: any) {
+      testError = e?.message || String(e);
+    }
+  }
+  res.json({
+    status: 'ok',
+    cloudinary: diag,
+    ping: pingResult,
+    error: testError
+  });
+});
 
 // Health check endpoint
 const handleHealth = async (_req: express.Request, res: express.Response) => {

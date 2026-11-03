@@ -348,6 +348,13 @@ export const api = {
       body: isFormData ? formData : JSON.stringify(formData)
     });
   },
+  duplicateCarDecoration: (id: string) =>
+    request<{ success: boolean; message: string; post: CarDecorationPost }>(
+      `/car-decorations/admin/${id}/duplicate`,
+      {
+        method: 'POST'
+      }
+    ),
   toggleCarDecorationStatus: (id: string) =>
     request<{ success: boolean; message: string; post: CarDecorationPost }>(`/car-decorations/admin/${id}/status`, {
       method: 'PATCH'
