@@ -57146,14 +57146,20 @@ var import_dotenv = __toESM(require_main());
 import_dotenv.default.config();
 var initCloudinary = () => {
   const cloud_name = (process.env.CLOUDINARY_CLOUD_NAME || "").trim().replace(/^["']|["']$/g, "");
-  const api_key = (process.env.CLOUDINARY_API_KEY || "").trim().replace(/^["']|["']$/g, "");
-  const api_secret = (process.env.CLOUDINARY_API_SECRET || "").trim().replace(/^["']|["']$/g, "");
+  let api_key = (process.env.CLOUDINARY_API_KEY || "").trim().replace(/^["']|["']$/g, "");
+  let api_secret = (process.env.CLOUDINARY_API_SECRET || "").trim().replace(/^["']|["']$/g, "");
   const cloudinary_url = (process.env.CLOUDINARY_URL || "").trim().replace(/^["']|["']$/g, "");
   if (cloudinary_url) {
     import_cloudinary.v2.config({
       cloudinary_url,
       secure: true
     });
+  }
+  if (/^[a-zA-Z0-9_-]{20,}$/.test(api_key) && /^\d+$/.test(api_secret)) {
+    console.warn("[Cloudinary] Correcting swapped API Key and Secret configuration");
+    const temp = api_key;
+    api_key = api_secret;
+    api_secret = temp;
   }
   if (cloud_name && api_key && api_secret) {
     import_cloudinary.v2.config({
@@ -57185,8 +57191,12 @@ var getCloudinaryDiagnostics = () => {
     hasApiKey: Boolean(rawKey),
     apiKeyLength: rawKey.length,
     apiKeyMasked: rawKey ? `${rawKey.slice(0, 3)}***` : null,
+    isKeyNumeric: /^\d+$/.test(rawKey),
     hasApiSecret: Boolean(rawSecret),
     apiSecretLength: rawSecret.length,
+    apiSecretMasked: rawSecret ? `${rawSecret.slice(0, 3)}***` : null,
+    isSecretNumeric: /^\d+$/.test(rawSecret),
+    areKeyAndSecretSame: rawKey === rawSecret,
     hasCloudinaryUrl: Boolean(rawUrl)
   };
 };
