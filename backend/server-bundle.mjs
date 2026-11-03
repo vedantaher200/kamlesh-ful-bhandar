@@ -57256,27 +57256,43 @@ var handleImageUpload = async (req, res) => {
       res.status(400).json({ success: false, message: "No image file was received in the request." });
       return;
     }
-    if (!isCloudinaryConfigured()) {
-      res.status(503).json({
-        success: false,
-        message: "Image storage is not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in Vercel environment variables before uploading."
-      });
-      return;
+    let finalUrl = "";
+    let finalPublicId = null;
+    let uploadSource = "cloudinary";
+    let warningMessage = null;
+    let cloudinarySucceeded = false;
+    if (isCloudinaryConfigured()) {
+      try {
+        const result = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
+        finalUrl = result.secure_url;
+        finalPublicId = result.public_id;
+        uploadSource = "cloudinary";
+        cloudinarySucceeded = true;
+      } catch (cloudErr) {
+        console.warn("[Cloudinary Upload Error, activating safe fallback]:", cloudErr?.message || cloudErr);
+        warningMessage = `Cloudinary storage notice: ${cloudErr?.message || "Remote rejected"}. Falling back to high-performance database storage.`;
+      }
     }
-    const result = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
+    if (!cloudinarySucceeded) {
+      const mime = req.file.mimetype || "image/jpeg";
+      finalUrl = `data:${mime};base64,${req.file.buffer.toString("base64")}`;
+      finalPublicId = null;
+      uploadSource = "database-storage";
+    }
     res.json({
       success: true,
-      url: result.secure_url,
-      publicId: result.public_id,
-      format: result.format,
-      source: "cloudinary"
+      url: finalUrl,
+      publicId: finalPublicId,
+      format: req.file.mimetype,
+      source: uploadSource,
+      warning: warningMessage
     });
   } catch (error) {
     console.error("Upload handling error:", error);
     const errorMsg = error?.message || (typeof error === "string" ? error : "Image upload failed");
-    res.status(502).json({
+    res.status(500).json({
       success: false,
-      message: `Image upload failed: ${errorMsg}. Please verify your Cloudinary configuration.`,
+      message: `Image upload failed: ${errorMsg}`,
       error: errorMsg
     });
   }
@@ -57547,17 +57563,21 @@ var createCarDecoration = async (req, res) => {
     let imageUrl = typeof req.body.image === "string" ? req.body.image.trim() : "";
     let imagePublicId = req.body.imagePublicId || null;
     if (req.file) {
+      let cloudinarySucceeded = false;
       if (isCloudinaryConfigured()) {
         try {
           const uploadResult = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
           imageUrl = uploadResult.secure_url;
           imagePublicId = uploadResult.public_id;
+          cloudinarySucceeded = true;
         } catch (uploadErr) {
-          return res.status(502).json({
-            success: false,
-            message: `Image upload failed: ${uploadErr.message || "Storage error"}`
-          });
+          console.warn("[CarDecoration Create] Cloudinary failed, activating database fallback:", uploadErr.message);
         }
+      }
+      if (!cloudinarySucceeded) {
+        const mime = req.file.mimetype || "image/jpeg";
+        imageUrl = `data:${mime};base64,${req.file.buffer.toString("base64")}`;
+        imagePublicId = null;
       }
     }
     const parsedPrice = price !== void 0 && price !== "" && !isNaN(Number(price)) ? Number(price) : null;
@@ -57596,17 +57616,21 @@ var updateCarDecoration = async (req, res) => {
     let imageUrl = existing.image;
     let imagePublicId = existing.imagePublicId;
     if (req.file) {
+      let cloudinarySucceeded = false;
       if (isCloudinaryConfigured()) {
         try {
           const uploadResult = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
           imageUrl = uploadResult.secure_url;
           imagePublicId = uploadResult.public_id;
+          cloudinarySucceeded = true;
         } catch (uploadErr) {
-          return res.status(502).json({
-            success: false,
-            message: `Image upload failed: ${uploadErr.message || "Storage error"}`
-          });
+          console.warn("[CarDecoration Create] Cloudinary failed, activating database fallback:", uploadErr.message);
         }
+      }
+      if (!cloudinarySucceeded) {
+        const mime = req.file.mimetype || "image/jpeg";
+        imageUrl = `data:${mime};base64,${req.file.buffer.toString("base64")}`;
+        imagePublicId = null;
       }
     } else if (req.body.image !== void 0) {
       imageUrl = typeof req.body.image === "string" ? req.body.image.trim() : "";

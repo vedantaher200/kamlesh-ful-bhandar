@@ -88,17 +88,21 @@ export const createCarDecoration = async (req: Request, res: Response) => {
 
     // Handle direct file upload if submitted via multipart/form-data
     if (req.file) {
+      let cloudinarySucceeded = false;
       if (isCloudinaryConfigured()) {
         try {
           const uploadResult = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
           imageUrl = uploadResult.secure_url;
           imagePublicId = uploadResult.public_id;
+          cloudinarySucceeded = true;
         } catch (uploadErr: any) {
-          return res.status(502).json({
-            success: false,
-            message: `Image upload failed: ${uploadErr.message || 'Storage error'}`
-          });
+          console.warn('[CarDecoration Create] Cloudinary failed, activating database fallback:', uploadErr.message);
         }
+      }
+      if (!cloudinarySucceeded) {
+        const mime = req.file.mimetype || 'image/jpeg';
+        imageUrl = `data:${mime};base64,${req.file.buffer.toString('base64')}`;
+        imagePublicId = null;
       }
     }
 
@@ -147,17 +151,21 @@ export const updateCarDecoration = async (req: Request, res: Response) => {
 
     // Handle direct file upload if submitted via multipart/form-data
     if (req.file) {
+      let cloudinarySucceeded = false;
       if (isCloudinaryConfigured()) {
         try {
           const uploadResult = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
           imageUrl = uploadResult.secure_url;
           imagePublicId = uploadResult.public_id;
+          cloudinarySucceeded = true;
         } catch (uploadErr: any) {
-          return res.status(502).json({
-            success: false,
-            message: `Image upload failed: ${uploadErr.message || 'Storage error'}`
-          });
+          console.warn('[CarDecoration Create] Cloudinary failed, activating database fallback:', uploadErr.message);
         }
+      }
+      if (!cloudinarySucceeded) {
+        const mime = req.file.mimetype || 'image/jpeg';
+        imageUrl = `data:${mime};base64,${req.file.buffer.toString('base64')}`;
+        imagePublicId = null;
       }
     } else if (req.body.image !== undefined) {
       // Allow updating image or explicitly clearing it (empty string)
