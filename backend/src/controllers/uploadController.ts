@@ -1,9 +1,12 @@
 import { Request, Response } from 'express';
+import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
+import { put } from '@vercel/blob';
+import { getBlobToken, isBlobConfigured } from '../config/blob.js';
 import { cloudinary, isCloudinaryConfigured, initCloudinary } from '../config/cloudinary.js';
 
 /**
  * Uploads an in-memory buffer to Cloudinary using direct base64 data URI upload.
- * This avoids stream pipe issues, socket hangs, and unhandled stream errors in serverless runtimes.
+ * Preserved for backwards compatibility with existing systems and legacy fallback.
  */
 export const uploadToCloudinary = (
   buffer: Buffer,
@@ -50,7 +53,63 @@ export const uploadToCloudinary = (
 };
 
 /**
- * Express handler for POST /api/upload and POST /api/upload/image
+ * Express handler for generating client upload tokens for Vercel Blob.
+ * Protected by authenticateAdmin middleware.
+ * Called by @vercel/blob/client upload() from browser.
+ */
+export const handleBlobUploadToken = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!isBlobConfigured()) {
+      res.status(503).json({
+        success: false,
+        message: 'Vercel Blob storage is not configured. BLOB_READ_WRITE_TOKEN is missing.'
+      });
+      return;
+    }
+
+    const body = req.body as HandleUploadBody;
+    const token = getBlobToken();
+
+    const jsonResponse = await handleUpload({
+      body,
+      request: req,
+      token,
+      onBeforeGenerateToken: async (pathname: string, clientPayload: string | null) => {
+        const adminId = (req as any).user?.id || 'admin';
+        return {
+          allowedContentTypes: [
+            'image/jpeg',
+            'image/png',
+            'image/webp',
+            'image/gif',
+            'image/svg+xml'
+          ],
+          maximumSizeInBytes: 15 * 1024 * 1024, // 15MB
+          addRandomSuffix: true,
+          tokenPayload: JSON.stringify({
+            userId: adminId,
+            pathname,
+            timestamp: Date.now()
+          })
+        };
+      },
+      onUploadCompleted: async ({ blob, tokenPayload }) => {
+        console.log('[Vercel Blob Upload Finished]:', blob.url, tokenPayload);
+      }
+    });
+
+    res.status(200).json(jsonResponse);
+  } catch (error: any) {
+    console.error('[Blob HandleUpload Error]:', error);
+    res.status(400).json({
+      error: error?.message || 'Failed to generate Blob upload token'
+    });
+  }
+};
+
+/**
+ * Express handler for direct multipart upload (POST /api/upload and POST /api/upload/image).
+ * Used for direct server uploads, automated test harnesses, and backwards compatibility.
  */
 export const handleImageUpload = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -61,26 +120,46 @@ export const handleImageUpload = async (req: Request, res: Response): Promise<vo
 
     let finalUrl = '';
     let finalPublicId: string | null = null;
-    let uploadSource = 'cloudinary';
+    let uploadSource = 'vercel-blob';
     let warningMessage: string | null = null;
 
-    let cloudinarySucceeded = false;
-    if (isCloudinaryConfigured()) {
+    // 1. Primary: Upload to Vercel Blob store
+    if (isBlobConfigured()) {
+      try {
+        const originalName = req.file.originalname || `upload-${Date.now()}.jpg`;
+        const sanitizedFilename = originalName.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const token = getBlobToken();
+
+        const blob = await put(sanitizedFilename, req.file.buffer, {
+          access: 'public',
+          token,
+          addRandomSuffix: true,
+          contentType: req.file.mimetype || 'image/jpeg'
+        });
+
+        finalUrl = blob.url;
+        finalPublicId = blob.pathname;
+        uploadSource = 'vercel-blob';
+      } catch (blobErr: any) {
+        console.warn('[Vercel Blob Direct Put Failed, falling back]:', blobErr?.message || blobErr);
+        warningMessage = `Blob storage notice: ${blobErr?.message || 'Failed'}.`;
+      }
+    }
+
+    // 2. Secondary fallback: Cloudinary
+    if (!finalUrl && isCloudinaryConfigured()) {
       try {
         const result = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
         finalUrl = result.secure_url;
         finalPublicId = result.public_id;
         uploadSource = 'cloudinary';
-        cloudinarySucceeded = true;
       } catch (cloudErr: any) {
-        console.warn('[Cloudinary Upload Error, activating safe fallback]:', cloudErr?.message || cloudErr);
-        warningMessage = `Cloudinary storage notice: ${cloudErr?.message || 'Remote rejected'}. Falling back to high-performance database storage.`;
+        console.warn('[Cloudinary Fallback Error]:', cloudErr?.message || cloudErr);
       }
     }
 
-    if (!cloudinarySucceeded) {
-      // High-performance resilient database storage fallback
-      // Serves the image directly as an optimized data URI
+    // 3. Resilient Database / Data-URI fallback
+    if (!finalUrl) {
       const mime = req.file.mimetype || 'image/jpeg';
       finalUrl = `data:${mime};base64,${req.file.buffer.toString('base64')}`;
       finalPublicId = null;

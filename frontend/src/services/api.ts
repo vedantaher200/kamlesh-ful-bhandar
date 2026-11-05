@@ -11,6 +11,8 @@ import {
   Location,
   CarDecorationPost
 } from '../types/index';
+import { upload } from '@vercel/blob/client';
+import { optimizeImage } from '../utils/imageOptimizer';
 
 const API_BASE = (import.meta.env.VITE_API_URL as string) || '/api';
 
@@ -207,6 +209,10 @@ export const api = {
     request<{ success: boolean; message: string }>(`/gallery/${id}`, {
       method: 'DELETE'
     }),
+  duplicateGalleryImage: (id: string) =>
+    request<{ success: boolean; message: string; galleryImage: GalleryImage }>(`/gallery/${id}/duplicate`, {
+      method: 'POST'
+    }),
 
   // Enquiries
   createEnquiry: (data: Partial<Enquiry>) =>
@@ -310,11 +316,60 @@ export const api = {
   getDashboardStats: () =>
     request<{ success: boolean; stats: DashboardStats }>('/settings/dashboard-stats'),
 
-  // Upload Image
-  uploadImage: async (file: File) => {
+  // Upload Image (Vercel Blob Client Direct Upload with Fallback)
+  uploadImage: async (file: File): Promise<{ success: boolean; url: string; publicId: string; source: string; warning?: string }> => {
+    // 1. Client-side MIME validation
+    const validMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+    if (file.type && !validMimes.includes(file.type)) {
+      throw new Error(`Unsupported image format (${file.type}). Please select a JPG, PNG, WEBP, or GIF image.`);
+    }
+
+    // 2. Client-side optimization: compress large images before upload
+    let fileToUpload = file;
+    try {
+      fileToUpload = await optimizeImage(file);
+    } catch (optErr) {
+      console.warn('[Image Optimize Warning]:', optErr);
+      fileToUpload = file;
+    }
+
+    // 3. Client-side size check (15MB max)
+    const MAX_SIZE = 15 * 1024 * 1024;
+    if (fileToUpload.size > MAX_SIZE) {
+      throw new Error(`Image size is ${(fileToUpload.size / (1024 * 1024)).toFixed(1)}MB. Maximum allowed is 15MB.`);
+    }
+
+    const token = localStorage.getItem('kamlesh_admin_token') || '';
+    const authHeaders: Record<string, string> = {};
+    if (token) {
+      authHeaders['Authorization'] = `Bearer ${token}`;
+    }
+
+    // 4. Primary: Direct client upload to Vercel Blob store
+    try {
+      const sanitizedName = fileToUpload.name.replace(/[^a-zA-Z0-9._-]/g, '_') || `upload-${Date.now()}.jpg`;
+      const blob = await upload(sanitizedName, fileToUpload, {
+        access: 'public',
+        handleUploadUrl: `${API_BASE}/upload/token`,
+        headers: authHeaders
+      });
+
+      if (blob && blob.url) {
+        return {
+          success: true,
+          url: blob.url,
+          publicId: blob.pathname,
+          source: 'vercel-blob'
+        };
+      }
+    } catch (blobErr: any) {
+      console.warn('[Vercel Blob Client Upload Notice, using server upload]:', blobErr?.message || blobErr);
+    }
+
+    // 5. Fallback: Direct server upload to /upload/image
     const formData = new FormData();
-    formData.append('image', file);
-    return request<{ success: boolean; url: string; publicId: string; source: string }>('/upload/image', {
+    formData.append('image', fileToUpload);
+    return request<{ success: boolean; url: string; publicId: string; source: string; warning?: string }>('/upload/image', {
       method: 'POST',
       body: formData
     });

@@ -2,6 +2,38 @@ import { Request, Response } from 'express';
 import { prisma } from '../config/prisma.js';
 import { deleteFromCloudinary, isCloudinaryConfigured } from '../config/cloudinary.js';
 import { uploadToCloudinary } from './uploadController.js';
+import { put } from '@vercel/blob';
+import { getBlobToken, isBlobConfigured } from '../config/blob.js';
+
+const uploadBufferToStorage = async (file: Express.Multer.File): Promise<{ url: string; publicId: string | null }> => {
+  if (isBlobConfigured()) {
+    try {
+      const originalName = file.originalname || `car-decor-${Date.now()}.jpg`;
+      const sanitizedFilename = originalName.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const blob = await put(sanitizedFilename, file.buffer, {
+        access: 'public',
+        token: getBlobToken(),
+        addRandomSuffix: true,
+        contentType: file.mimetype || 'image/jpeg'
+      });
+      return { url: blob.url, publicId: blob.pathname };
+    } catch (blobErr: any) {
+      console.warn('[CarDecoration] Blob upload failed, falling back:', blobErr?.message || blobErr);
+    }
+  }
+
+  if (isCloudinaryConfigured()) {
+    try {
+      const uploadResult = await uploadToCloudinary(file.buffer, file.mimetype);
+      return { url: uploadResult.secure_url, publicId: uploadResult.public_id };
+    } catch (cloudErr: any) {
+      console.warn('[CarDecoration] Cloudinary failed, falling back to database:', cloudErr?.message || cloudErr);
+    }
+  }
+
+  const mime = file.mimetype || 'image/jpeg';
+  return { url: `data:${mime};base64,${file.buffer.toString('base64')}`, publicId: null };
+};
 
 // 1. Public: Get only PUBLISHED Car Decoration posts
 export const getPublishedCarDecorations = async (_req: Request, res: Response) => {
@@ -88,22 +120,9 @@ export const createCarDecoration = async (req: Request, res: Response) => {
 
     // Handle direct file upload if submitted via multipart/form-data
     if (req.file) {
-      let cloudinarySucceeded = false;
-      if (isCloudinaryConfigured()) {
-        try {
-          const uploadResult = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
-          imageUrl = uploadResult.secure_url;
-          imagePublicId = uploadResult.public_id;
-          cloudinarySucceeded = true;
-        } catch (uploadErr: any) {
-          console.warn('[CarDecoration Create] Cloudinary failed, activating database fallback:', uploadErr.message);
-        }
-      }
-      if (!cloudinarySucceeded) {
-        const mime = req.file.mimetype || 'image/jpeg';
-        imageUrl = `data:${mime};base64,${req.file.buffer.toString('base64')}`;
-        imagePublicId = null;
-      }
+      const uploaded = await uploadBufferToStorage(req.file);
+      imageUrl = uploaded.url;
+      imagePublicId = uploaded.publicId;
     }
 
     const parsedPrice = price !== undefined && price !== '' && !isNaN(Number(price)) ? Number(price) : null;
@@ -151,22 +170,9 @@ export const updateCarDecoration = async (req: Request, res: Response) => {
 
     // Handle direct file upload if submitted via multipart/form-data
     if (req.file) {
-      let cloudinarySucceeded = false;
-      if (isCloudinaryConfigured()) {
-        try {
-          const uploadResult = await uploadToCloudinary(req.file.buffer, req.file.mimetype);
-          imageUrl = uploadResult.secure_url;
-          imagePublicId = uploadResult.public_id;
-          cloudinarySucceeded = true;
-        } catch (uploadErr: any) {
-          console.warn('[CarDecoration Create] Cloudinary failed, activating database fallback:', uploadErr.message);
-        }
-      }
-      if (!cloudinarySucceeded) {
-        const mime = req.file.mimetype || 'image/jpeg';
-        imageUrl = `data:${mime};base64,${req.file.buffer.toString('base64')}`;
-        imagePublicId = null;
-      }
+      const uploaded = await uploadBufferToStorage(req.file);
+      imageUrl = uploaded.url;
+      imagePublicId = uploaded.publicId;
     } else if (req.body.image !== undefined) {
       // Allow updating image or explicitly clearing it (empty string)
       imageUrl = typeof req.body.image === 'string' ? req.body.image.trim() : '';

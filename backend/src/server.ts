@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import apiRouter from './routes/index.js';
 import { prisma } from './config/prisma.js';
 import { getCloudinaryDiagnostics, isCloudinaryConfigured, cloudinary } from './config/cloudinary.js';
+import { getBlobDiagnostics, isBlobConfigured } from './config/blob.js';
 
 const getFileAndDir = () => {
   if (typeof __filename !== 'undefined' && typeof __dirname !== 'undefined') {
@@ -137,6 +138,7 @@ const handleDiag = async (_req: express.Request, res: express.Response) => {
       vercel: Boolean(process.env.VERCEL)
     },
     cloudinary: cloudinaryDiag,
+    blob: getBlobDiagnostics(),
     engineFiles: {
       inCwd: cwdEngines,
       inVarTask: taskEngines

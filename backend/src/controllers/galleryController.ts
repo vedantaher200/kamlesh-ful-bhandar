@@ -103,3 +103,36 @@ export const deleteGalleryImage = async (req: Request, res: Response): Promise<v
     res.status(500).json({ success: false, message: 'Failed to delete gallery image.', error: error.message });
   }
 };
+
+export const duplicateGalleryImage = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const existing = await prisma.galleryImage.findUnique({ where: { id } });
+    if (!existing) {
+      res.status(404).json({ success: false, message: 'Gallery image not found' });
+      return;
+    }
+
+    const duplicated = await prisma.galleryImage.create({
+      data: {
+        title: `${existing.title} (Copy)`,
+        category: existing.category,
+        categoryName: existing.categoryName,
+        description: existing.description,
+        image: existing.image,
+        imagePublicId: existing.imagePublicId,
+        price: existing.price,
+        priceMode: existing.priceMode,
+        isPublished: false
+      }
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Gallery item duplicated successfully.',
+      galleryImage: duplicated
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: 'Failed to duplicate gallery image.', error: error.message });
+  }
+};
